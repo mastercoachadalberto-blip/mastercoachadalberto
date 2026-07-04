@@ -469,13 +469,27 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .lang-btn{padding:6px 10px;font-size:12px}
 }
 </style>
+<style>
+/* ============================== BRAND LOGO ============================== */
+.brand-emblem{height:44px;width:auto;flex:none;display:block;transition:height .4s var(--ease),filter .4s var(--ease);filter:drop-shadow(0 4px 14px rgba(200,162,74,.28))}
+.nav.scrolled .brand-emblem{height:38px}
+.brand:hover .brand-emblem{filter:drop-shadow(0 6px 20px rgba(231,203,128,.5))}
+.hero-logo{width:clamp(150px,17vw,220px);height:auto;margin:0 0 30px;filter:drop-shadow(0 10px 34px rgba(200,162,74,.30));transform-origin:left center}
+.foot-brand .b{align-items:center}
+.foot-emblem{height:56px;width:auto;flex:none;filter:drop-shadow(0 4px 16px rgba(200,162,74,.25))}
+@media(max-width:720px){
+  .brand-emblem{height:38px}
+  .hero-logo{width:clamp(130px,32vw,170px);margin:0 0 22px}
+  .foot-emblem{height:48px}
+}
+</style>
 </head>
 <body>
 
 <!-- ===================== NAV ===================== -->
 <nav class="nav" id="nav">
   <a href="#hero" class="brand">
-    <span class="monogram">AC</span>
+    <img class="brand-emblem" src="assets/emblem.png" alt="Mastercoach — Adalberto Cardoza" />
     <b>Adalberto Cardoza</b><span class="mc">MasterCoach</span>
   </a>
   <div class="nav-links">
@@ -513,6 +527,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   <div class="hero-grain"></div>
   <div class="hero-inner wrap">
     <div class="hero-content">
+      <img class="hero-logo" src="assets/logo.png" alt="Adalberto Cardoza · Mastercoach" />
       <div class="hero-eyebrow eyebrow" data-i18n="hero.eyebrow">MasterCoach · Mentoría de élite</div>
       <h1>
         <span class="w" data-i18n="hero.w1">Disciplina.</span><br>
@@ -732,7 +747,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   <div class="wrap">
     <div class="foot-top">
       <div class="foot-brand">
-        <div class="b"><span class="monogram">AC</span><span><b>Adalberto Cardoza</b></span></div>
+        <div class="b"><img class="foot-emblem" src="assets/emblem.png" alt="Mastercoach" /><span><b>Adalberto Cardoza</b></span></div>
         <p data-i18n="foot.brand">MasterCoach · Mentor en disciplina, liderazgo y mentalidad. Forjando campeones desde la mente.</p>
       </div>
       <div class="foot-cols">
