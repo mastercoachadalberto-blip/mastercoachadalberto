@@ -725,7 +725,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
         </div>
         <div class="field"><label data-i18n="book.lblGoal">¿Qué quieres transformar?</label><textarea id="fGoal" data-i18n-placeholder="book.phGoal" placeholder="Cuéntame brevemente tu objetivo…"></textarea></div>
         <div class="book-actions">
-          <a class="btn btn-gold" id="waSend" href="#" target="_blank" rel="noopener" style="width:100%" data-i18n="book.waSend">Confirmar por WhatsApp</a>
+          <a class="btn btn-gold" id="stripePay" href="#programs" rel="noopener" style="width:100%" data-i18n="js.payBtn">Pagar con tarjeta</a>
+          <a class="btn btn-ghost" id="waSend" href="#" target="_blank" rel="noopener" style="width:100%" data-i18n="book.waSend">Confirmar por WhatsApp</a>
           <div class="chan">
             <a id="msgr" href="https://m.me/" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.3 2 2 6.2 2 11.6c0 2.9 1.3 5.4 3.3 7.1V22l3-1.7c.8.2 1.7.3 2.6.3 5.7 0 10-4.2 10-9.6S17.7 2 12 2zm1 12.3l-2.6-2.7L5.6 14l5.4-5.7 2.6 2.7L18.4 8l-5.4 6.3z"/></svg>
@@ -844,7 +845,7 @@ function renderSelect(){
   const sel=$("#fProgram");
   const prev=sel.value;
   sel.innerHTML = `<option value="">${T("js.selectProgram")}</option>`+
-    I18N.programs.map(p=>`<option value="${p.n}" data-price="${p.price}">${p.t[lang]} — ${p.price}</option>`).join("");
+    I18N.programs.map(p=>`<option value="${p.n}" data-price="${p.price}" data-pay="${p.pay||''}">${p.t[lang]} — ${p.price}</option>`).join("");
   if(prev) sel.value=prev;
 }
 
@@ -1002,6 +1003,12 @@ function buildWa(){
   $("#waSend").href = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${enc}` : WHATSAPP_LINK;
   const subj=encodeURIComponent(T("js.mailSubject"));
   $("#mail").href = `mailto:${EMAIL}?subject=${subj}&body=${enc}`;
+  const sp=$("#stripePay");
+  if(sp){
+    const payUrl = sel.value ? ((I18N.programs.find(p=>p.n===sel.value)||{}).pay||"") : "";
+    if(payUrl){ sp.href=payUrl; sp.setAttribute("target","_blank"); }
+    else{ sp.href="#programs"; sp.removeAttribute("target"); }
+  }
 }
 ["fName","fProgram","fGoal"].forEach(id=>$("#"+id).addEventListener("input",buildWa));
 $("#calPrev").addEventListener("click",()=>{
