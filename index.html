@@ -297,7 +297,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   transform:rotateY(var(--rot));
   will-change:transform;pointer-events:none;
 }
-.philo-ring.snap{transition:transform 1.05s cubic-bezier(.22,.8,.2,1)}
+.philo-ring.snap{transition:transform .6s var(--ease)}
 .pcard{
   --i:0deg;
   position:absolute;left:50%;top:50%;
@@ -384,7 +384,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   transform:rotateY(var(--rot));
   will-change:transform;pointer-events:none;
 }
-.prog-ring.snap{transition:transform 1.05s cubic-bezier(.22,.8,.2,1)}
+.prog-ring.snap{transition:transform .6s var(--ease)}
 .prog{
   --i:0deg;
   position:absolute;left:50%;top:50%;
@@ -1341,8 +1341,7 @@ function initPhiloScroll(){
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, raf = 0;
 
-  // más lento: menos grados por píxel y menos inercia al soltar
-  const sensitivity = ()=> 0.07 * (360 / Math.max(stage.clientWidth, 280));
+  const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
 
   const onDown = (e)=>{
     if(PhiloWheel.busy) return;
@@ -1376,15 +1375,15 @@ function initPhiloScroll(){
   const settle = ()=>{
     const n = I18N.philosophy.length || 1;
     const step = 360 / n;
-    let v = velocity * 7;
+    let v = velocity * 14;
     const tick = ()=>{
-      if(Math.abs(v) < 0.04){
+      if(Math.abs(v) < 0.08){
         const idx = Math.round((-PhiloWheel.rot) / step);
         PhiloWheel.goTo(((idx % n) + n) % n, true, false);
         return;
       }
-      PhiloWheel.rot += v * sensitivity() * 6;
-      v *= 0.88;
+      PhiloWheel.rot += v * sensitivity() * 11;
+      v *= 0.91;
       PhiloWheel.apply(false);
       raf = requestAnimationFrame(tick);
     };
@@ -1521,7 +1520,7 @@ function initProgCarousel(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, raf = 0;
-  const sensitivity = ()=> 0.07 * (360 / Math.max(stage.clientWidth, 280));
+  const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
 
   const onDown = (e)=>{
     if(ProgWheel.busy || katanaBusy) return;
@@ -1555,15 +1554,15 @@ function initProgCarousel(){
   const settle = ()=>{
     const n = I18N.programs.length || 1;
     const step = 360 / n;
-    let v = velocity * 7;
+    let v = velocity * 14;
     const tick = ()=>{
-      if(Math.abs(v) < 0.04){
+      if(Math.abs(v) < 0.08){
         const idx = Math.round((-ProgWheel.rot) / step);
         ProgWheel.goTo(((idx % n) + n) % n, true, false);
         return;
       }
-      ProgWheel.rot += v * sensitivity() * 6;
-      v *= 0.88;
+      ProgWheel.rot += v * sensitivity() * 11;
+      v *= 0.91;
       ProgWheel.apply(false);
       raf = requestAnimationFrame(tick);
     };
