@@ -228,11 +228,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
 }
 .philo-stage:active,.philo.is-dragging .philo-stage{cursor:grabbing}
-.philo-stage::before,.philo-stage::after{
-  content:"";position:absolute;top:0;bottom:0;width:min(22vw,180px);z-index:4;pointer-events:none;
-}
-.philo-stage::before{left:0;background:linear-gradient(90deg,rgba(10,10,11,.75),transparent)}
-.philo-stage::after{right:0;background:linear-gradient(270deg,rgba(10,10,11,.75),transparent)}
 /* katana FX (global) */
 .katana-fx{
   position:fixed;inset:0;z-index:240;pointer-events:none;overflow:hidden;
@@ -351,7 +346,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* fallback sin motion / estático */
 .philo.philo-static .philo-hint,.philo.philo-static .philo-meta{display:none}
 .philo.philo-static .philo-stage{perspective:none;height:auto;margin-top:48px;cursor:default}
-.philo.philo-static .philo-stage::before,.philo.philo-static .philo-stage::after{display:none}
 .philo.philo-static .philo-ring{
   width:100%;height:auto;transform:none!important;
   display:grid;grid-template-columns:repeat(4,1fr);gap:16px;
@@ -372,11 +366,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
 }
 .prog-stage:active,.programs.is-dragging .prog-stage{cursor:grabbing}
-.prog-stage::before,.prog-stage::after{
-  content:"";position:absolute;top:0;bottom:0;width:min(20vw,160px);z-index:4;pointer-events:none;
-}
-.prog-stage::before{left:0;background:linear-gradient(90deg,var(--ink),transparent)}
-.prog-stage::after{right:0;background:linear-gradient(270deg,var(--ink),transparent)}
 .prog-ring{
   --rot:0deg; --radius:420px;
   position:relative;width:1px;height:1px;
@@ -437,7 +426,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .prog-meta b{color:var(--gold-lt);font-weight:500;font-variant-numeric:tabular-nums}
 .prog-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.55}
 .programs.prog-static .prog-stage{perspective:none;height:auto;cursor:default;margin-top:48px}
-.programs.prog-static .prog-stage::before,.programs.prog-static .prog-stage::after{display:none}
 .programs.prog-static .prog-ring{
   width:100%;height:auto;transform:none!important;
   display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
