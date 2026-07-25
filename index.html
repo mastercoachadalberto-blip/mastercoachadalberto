@@ -222,14 +222,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .philo.is-dragging .philo-hint,.philo.has-dragged .philo-hint{opacity:0}
 @keyframes philoCue{0%,100%{transform:scaleX(.55);opacity:.35}50%{transform:scaleX(1);opacity:1}}
 .philo-stage{
-  position:relative;z-index:2;perspective:1600px;perspective-origin:50% 45%;
-  height:min(420px,52vh);margin-top:10px;
+  position:relative;z-index:2;perspective:1800px;perspective-origin:50% 45%;
+  height:min(460px,56vh);margin-top:10px;
   display:flex;align-items:center;justify-content:center;
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
 }
 .philo-stage:active,.philo.is-dragging .philo-stage{cursor:grabbing}
 .philo-stage::before,.philo-stage::after{
-  content:"";position:absolute;top:0;bottom:0;width:min(18vw,140px);z-index:4;pointer-events:none;
+  content:"";position:absolute;top:0;bottom:0;width:min(22vw,180px);z-index:4;pointer-events:none;
 }
 .philo-stage::before{left:0;background:linear-gradient(90deg,rgba(10,10,11,.75),transparent)}
 .philo-stage::after{right:0;background:linear-gradient(270deg,rgba(10,10,11,.75),transparent)}
@@ -291,19 +291,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .is-cutting{opacity:0!important;transition:none!important}
 .philo-fx{display:none}
 .philo-ring{
-
-  --rot:0deg; --radius:340px;
+  --rot:0deg; --radius:480px;
   position:relative;width:1px;height:1px;
   transform-style:preserve-3d;
   transform:rotateY(var(--rot));
   will-change:transform;pointer-events:none;
 }
-.philo-ring.snap{transition:transform .55s var(--ease)}
+.philo-ring.snap{transition:transform 1.05s cubic-bezier(.22,.8,.2,1)}
 .pcard{
   --i:0deg;
   position:absolute;left:50%;top:50%;
-  width:min(280px,72vw);min-height:240px;
-  margin:-120px 0 0 calc(min(280px,72vw) / -2);
+  width:min(260px,68vw);min-height:240px;
+  margin:-120px 0 0 calc(min(260px,68vw) / -2);
   padding:30px 26px 28px;border-radius:14px;
   display:flex;flex-direction:column;
   background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(18,18,20,.82) 55%),rgba(18,18,20,.78);
@@ -363,28 +362,91 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .philo.philo-static .philo-dots{display:none}
 
-/* ============================== PROGRAMS ============================== */
-.programs{background:linear-gradient(180deg,var(--onyx),var(--ink))}
-.prog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:60px}
-.prog{border:1px solid var(--line-soft);border-radius:3px;padding:38px 32px;background:linear-gradient(180deg,rgba(255,255,255,.012),transparent);
-  display:flex;flex-direction:column;transition:.5s var(--ease);position:relative;overflow:hidden}
-.prog::after{content:"";position:absolute;inset:0;border-radius:3px;border:1px solid transparent;transition:.5s var(--ease);pointer-events:none}
-.prog:hover{transform:translateY(-6px);background:linear-gradient(180deg,rgba(200,162,74,.05),transparent)}
-.prog:hover::after{border-color:var(--line)}
+/* ============================== PROGRAMS (carousel) ============================== */
+.programs{background:linear-gradient(180deg,var(--onyx),var(--ink));overflow:hidden}
+.programs .lead{margin-bottom:8px}
+.prog-stage{
+  position:relative;z-index:2;perspective:1800px;perspective-origin:50% 42%;
+  height:min(560px,72vh);margin-top:36px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
+}
+.prog-stage:active,.programs.is-dragging .prog-stage{cursor:grabbing}
+.prog-stage::before,.prog-stage::after{
+  content:"";position:absolute;top:0;bottom:0;width:min(20vw,160px);z-index:4;pointer-events:none;
+}
+.prog-stage::before{left:0;background:linear-gradient(90deg,var(--ink),transparent)}
+.prog-stage::after{right:0;background:linear-gradient(270deg,var(--ink),transparent)}
+.prog-ring{
+  --rot:0deg; --radius:420px;
+  position:relative;width:1px;height:1px;
+  transform-style:preserve-3d;
+  transform:rotateY(var(--rot));
+  will-change:transform;pointer-events:none;
+}
+.prog-ring.snap{transition:transform 1.05s cubic-bezier(.22,.8,.2,1)}
+.prog{
+  --i:0deg;
+  position:absolute;left:50%;top:50%;
+  width:min(300px,78vw);min-height:420px;
+  margin:-210px 0 0 calc(min(300px,78vw) / -2);
+  border:1px solid rgba(200,162,74,.22);border-radius:14px;padding:34px 28px 28px;
+  background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(18,18,20,.88) 55%),rgba(18,18,20,.86);
+  display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(200,162,74,.04), 0 18px 50px -28px rgba(0,0,0,.75);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transform:rotateY(var(--i)) translateZ(var(--radius));
+  transform-style:preserve-3d;backface-visibility:hidden;
+  opacity:.28;filter:saturate(.7) brightness(.72);
+  transition:opacity .35s var(--ease),filter .35s var(--ease),border-color .35s var(--ease),background .35s var(--ease),box-shadow .35s var(--ease);
+  pointer-events:none;
+}
+.prog::after{content:"";position:absolute;inset:0;border-radius:14px;border:1px solid transparent;pointer-events:none;
+  background:radial-gradient(120% 80% at 100% 0,rgba(200,162,74,.12),transparent 55%);opacity:0;transition:opacity .35s var(--ease)}
 .prog .num{font-size:11px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase}
-.prog h3{font-family:var(--serif);font-size:1.7rem;font-weight:600;color:var(--bone);margin:16px 0 0;line-height:1.12}
-.prog p{font-size:.96rem;color:var(--bone-dim);margin:16px 0 0;flex-grow:1}
-.prog .meta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:28px;padding-top:22px;border-top:1px solid var(--line-soft)}
+.prog h3{font-family:var(--serif);font-size:1.55rem;font-weight:600;color:var(--bone);margin:16px 0 0;line-height:1.12}
+.prog p{font-size:.92rem;color:var(--bone-dim);margin:14px 0 0;flex-grow:1;line-height:1.55}
+.prog .meta{display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;padding-top:18px;border-top:1px solid var(--line-soft)}
 .prog .dur{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.prog .price{font-family:var(--serif);font-size:1.5rem;color:var(--gold-lt)}
-.prog .price small{font-size:.72rem;color:var(--muted);letter-spacing:.1em}
+.prog .price{font-family:var(--serif);font-size:1.45rem;color:var(--gold-lt)}
 .prog .price .cents{font-size:.55em;vertical-align:super;letter-spacing:.03em;margin-left:1px;font-weight:500}
-.prog .pbtn{margin-top:24px;width:100%;padding:14px;border:1px solid var(--line);border-radius:2px;
-  font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--bone);transition:.4s var(--ease)}
+.prog .pbtn{margin-top:12px;width:100%;padding:13px;border:1px solid var(--line);border-radius:2px;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone);transition:.4s var(--ease);text-align:center;display:block}
 .prog .pbtn:hover{background:var(--gold);color:#0A0A0B;border-color:var(--gold)}
-.prog .pbtn-pay{display:block;text-align:center;background:var(--gold);color:#0A0A0B;border-color:var(--gold);margin-top:24px}
+.prog .pbtn-pay{background:var(--gold);color:#0A0A0B;border-color:var(--gold);margin-top:20px}
 .prog .pbtn-pay:hover{background:var(--gold-lt);border-color:var(--gold-lt)}
-.prog .pbtn-pay + .pbtn{margin-top:12px;background:transparent}
+.prog.lit{
+  opacity:1;filter:none;z-index:2;pointer-events:auto;
+  border-color:rgba(200,162,74,.65);
+  background:linear-gradient(165deg,rgba(200,162,74,.1),rgba(18,18,20,.92) 55%),rgba(18,18,20,.9);
+  box-shadow:0 0 0 1px rgba(200,162,74,.16), 0 28px 70px -24px rgba(200,162,74,.5), 0 30px 80px -36px rgba(0,0,0,.85);
+}
+.prog.lit::after{opacity:1}
+.prog.lit h3{color:var(--gold-lt)}
+.prog.near{opacity:.55;filter:saturate(.85) brightness(.88)}
+.prog-dots{display:flex;justify-content:center;gap:8px;margin-top:28px;position:relative;z-index:3}
+.prog-dots button{
+  width:7px;height:7px;border-radius:50%;padding:0;
+  background:rgba(236,232,223,.22);border:1px solid transparent;transition:.35s var(--ease);
+}
+.prog-dots button.on{background:var(--gold);box-shadow:0 0 0 4px rgba(200,162,74,.14);transform:scale(1.15)}
+.prog-meta{
+  display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
+}
+.prog-meta b{color:var(--gold-lt);font-weight:500;font-variant-numeric:tabular-nums}
+.prog-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.55}
+.programs.prog-static .prog-stage{perspective:none;height:auto;cursor:default;margin-top:48px}
+.programs.prog-static .prog-stage::before,.programs.prog-static .prog-stage::after{display:none}
+.programs.prog-static .prog-ring{
+  width:100%;height:auto;transform:none!important;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+}
+.programs.prog-static .prog{
+  position:relative;left:auto;top:auto;margin:0;width:auto;min-height:0;opacity:1;filter:none;
+  transform:none!important;pointer-events:auto;
+}
+.programs.prog-static .prog-dots,.programs.prog-static .prog-meta{display:none}
 
 /* ============================== CONTENT HUB ============================== */
 .hub{background:var(--ink);position:relative}
@@ -553,24 +615,31 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 /* ============================== RESPONSIVE ============================== */
 @media(max-width:1000px){
-  .philo-ring{--radius:260px}
+  .philo-ring{--radius:360px}
   .philo.philo-static .philo-ring{grid-template-columns:repeat(2,1fr)}
-  .prog-grid,.hub-grid{grid-template-columns:repeat(2,1fr)}
+  .prog-ring{--radius:320px}
+  .programs.prog-static .prog-ring{grid-template-columns:repeat(2,1fr)}
+  .hub-grid{grid-template-columns:repeat(2,1fr)}
   .about-grid,.book-grid,.app-grid{grid-template-columns:1fr;gap:48px}
   .about-portrait{max-width:460px;margin:0 auto}
 }
 @media(max-width:760px){
   .section{padding:90px 0}
   .philo-bg{background-position:center center}
-  .philo-ring{--radius:190px}
+  .philo-ring{--radius:250px}
   .pcard{min-height:220px;padding:24px 22px 22px;margin-top:-110px}
   .pcard h3{font-size:1.35rem}
+  .prog-ring{--radius:240px}
+  .prog-stage{height:min(540px,78vh)}
+  .prog{min-height:400px;margin-top:-200px;padding:28px 22px 22px}
+  .prog h3{font-size:1.35rem}
   .nav-links{display:none}.nav-cta{display:none}.burger{display:flex}
   .hero-bg img{width:100%;opacity:.42;object-position:50% 16%}
   .hero-bg::after{background:linear-gradient(180deg,rgba(10,10,11,.4) 0%,rgba(10,10,11,.7) 45%,var(--ink) 92%)}
   .hero-content{max-width:100%}
-  .prog-grid,.hub-grid{grid-template-columns:1fr}
+  .hub-grid{grid-template-columns:1fr}
   .philo.philo-static .philo-ring{grid-template-columns:1fr}
+  .programs.prog-static .prog-ring{grid-template-columns:1fr}
   .modal-box{padding:34px 26px}
   .slots{grid-template-columns:repeat(3,1fr)}
   .foot-top{flex-direction:column}
@@ -760,7 +829,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     <div class="eyebrow reveal" data-i18n="prog.eyebrow">Programas de Mentoría</div>
     <h2 class="s-title reveal d1" data-i18n-html="prog.title">Elige tu <em>transformación</em></h2>
     <p class="lead reveal d2" style="margin-top:20px" data-i18n="prog.lead">Acompañamiento serio, estructurado y personal. Cada programa está diseñado para llevarte de la intención a la disciplina, y de la disciplina a una vida que dominas.</p>
-    <div class="prog-grid" id="progGrid"></div>
+    <div class="prog-meta reveal d2" aria-live="polite">
+      <b id="progActive">01</b>
+      <span class="dot" aria-hidden="true"></span>
+      <span id="progTotal">03</span>
+    </div>
+    <div class="prog-stage" id="progStage" aria-roledescription="carrusel" aria-label="Programas de mentoría">
+      <div class="prog-ring" id="progGrid"></div>
+    </div>
+    <div class="prog-dots" id="progDots" role="tablist" aria-label="Programas"></div>
   </div>
 </section>
 
@@ -1117,7 +1194,7 @@ const PhiloWheel = {
     if(activeEl) activeEl.textContent = String(idx+1).padStart(2,"0");
     $$("#philoDots button").forEach((b,i)=>b.classList.toggle("on", i===idx));
   },
-  goTo(idx, snap=true, fx=true){
+  goTo(idx, snap=true, fx=false){
     if(this.busy) return;
     const n = I18N.philosophy.length || 1;
     const step = 360 / n;
@@ -1161,16 +1238,24 @@ const PhiloWheel = {
     if(el.dataset.katanaGo) return;
     if(el.disabled || el.getAttribute("aria-disabled") === "true") return;
     if(el.closest(".katana-fx") || el.closest(".slice-ghost")) return;
-    // pilares: corte sobre la tarjeta activa
+    // pilares / programas: corte sobre la tarjeta activa
     if(el.closest("#philoDots")){
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
       if(katanaBusy || PhiloWheel.busy) return;
-      PhiloWheel.goTo(+el.dataset.idx, true, true);
+      PhiloWheel.goTo(+el.dataset.idx, true, false);
       return;
     }
-    if(katanaBusy || PhiloWheel.busy){
+    if(el.closest("#progDots")){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if(katanaBusy || ProgWheel.busy) return;
+      ProgWheel.goTo(+el.dataset.idx, true, false);
+      return;
+    }
+    if(katanaBusy || PhiloWheel.busy || ProgWheel.busy){
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -1207,7 +1292,7 @@ function renderPhilo(){
     dots.innerHTML = items.map((p,i)=>`
       <button type="button" role="tab" data-idx="${i}" aria-label="${p.t[lang]}" ${i===PhiloWheel.active?'class="on"':''}></button>`).join("");
     dots.querySelectorAll("button").forEach(btn=>{
-      btn.addEventListener("click",()=>PhiloWheel.goTo(+btn.dataset.idx, true, true));
+      btn.addEventListener("click",()=>PhiloWheel.goTo(+btn.dataset.idx, true, false));
     });
   }
   // modo estático: clic directo en tarjeta
@@ -1256,7 +1341,8 @@ function initPhiloScroll(){
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, raf = 0;
 
-  const sensitivity = ()=> 0.14 * (360 / Math.max(stage.clientWidth, 280));
+  // más lento: menos grados por píxel y menos inercia al soltar
+  const sensitivity = ()=> 0.07 * (360 / Math.max(stage.clientWidth, 280));
 
   const onDown = (e)=>{
     if(PhiloWheel.busy) return;
@@ -1290,15 +1376,15 @@ function initPhiloScroll(){
   const settle = ()=>{
     const n = I18N.philosophy.length || 1;
     const step = 360 / n;
-    let v = velocity * 16;
+    let v = velocity * 7;
     const tick = ()=>{
-      if(Math.abs(v) < 0.08){
+      if(Math.abs(v) < 0.04){
         const idx = Math.round((-PhiloWheel.rot) / step);
-        PhiloWheel.goTo(((idx % n) + n) % n, true, true);
+        PhiloWheel.goTo(((idx % n) + n) % n, true, false);
         return;
       }
-      PhiloWheel.rot += v * sensitivity() * 12;
-      v *= 0.92;
+      PhiloWheel.rot += v * sensitivity() * 6;
+      v *= 0.88;
       PhiloWheel.apply(false);
       raf = requestAnimationFrame(tick);
     };
@@ -1325,24 +1411,78 @@ function initPhiloScroll(){
 
   stage.tabIndex = 0;
   stage.addEventListener("keydown", (e)=>{
-    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active+1, true, true); }
-    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active-1, true, true); }
+    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active+1, true, false); }
+    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active-1, true, false); }
     if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openActivePhiloMeditation(); }
   });
 
   PhiloWheel.apply(false);
 }
 
-/* ----- programs ----- */
+/* ----- programs (touch carousel) ----- */
 const fmtPrice = (price)=> price.replace(/(\d+)\.(\d{2})/, '$1<span class="cents">$2</span>');
+const ProgWheel = {
+  rot: 0,
+  active: 0,
+  ready: false,
+  busy: false,
+  apply(snap){
+    const ring = $("#progGrid");
+    if(!ring) return;
+    const n = I18N.programs.length || 1;
+    const step = 360 / n;
+    ring.classList.toggle("snap", !!snap);
+    ring.style.setProperty("--rot", this.rot.toFixed(3) + "deg");
+    let idx = Math.round((-this.rot) / step) % n;
+    if(idx < 0) idx += n;
+    this.active = idx;
+    $$("#progGrid .prog").forEach((c,i)=>{
+      const dist = Math.min(Math.abs(i-idx), n - Math.abs(i-idx));
+      c.classList.toggle("lit", i===idx);
+      c.classList.toggle("near", dist===1);
+      c.setAttribute("aria-hidden", i===idx ? "false" : "true");
+    });
+    const activeEl = $("#progActive");
+    if(activeEl) activeEl.textContent = String(idx+1).padStart(2,"0");
+    $$("#progDots button").forEach((b,i)=>b.classList.toggle("on", i===idx));
+  },
+  goTo(idx, snap=true, fx=false){
+    if(this.busy) return;
+    const n = I18N.programs.length || 1;
+    const step = 360 / n;
+    idx = ((idx % n) + n) % n;
+    const current = -this.rot / step;
+    let delta = idx - current;
+    delta = delta - Math.round(delta / n) * n;
+    const nextRot = -((current + delta) * step);
+    const changing = Math.abs(delta) > 0.01;
+    const move = ()=>{
+      this.rot = nextRot;
+      this.apply(snap);
+      this.busy = false;
+    };
+    if(!fx || !changing){ move(); return; }
+    this.busy = true;
+    katanaBusy = true;
+    const fromCard = $(`#progGrid .prog[data-idx="${this.active}"]`) || $("#progGrid .prog.lit");
+    runKatanaCut(fromCard, ()=>{ katanaBusy = false; move(); });
+  }
+};
 function renderPrograms(){
-  $("#progGrid").innerHTML = I18N.programs.map(p=>{
+  const items = I18N.programs;
+  const n = items.length;
+  const step = 360 / n;
+  const ring = $("#progGrid");
+  if(!ring) return;
+  const totalEl = $("#progTotal");
+  if(totalEl) totalEl.textContent = String(n).padStart(2,"0");
+  ring.innerHTML = items.map((p,i)=>{
     const title=p.t[lang];
     const msg = encodeURIComponent(`${T("js.payMsg")} "${title}" (${p.price}).`);
     const waHref = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}` : WHATSAPP_LINK;
     const payHref = p.pay ? p.pay : waHref;
     return `
-    <article class="prog">
+    <article class="prog" style="--i:${(i*step).toFixed(3)}deg" data-idx="${i}" data-prog="${p.n}">
       <span class="num">${T("js.progLabel")} ${p.n}</span>
       <h3>${title}</h3><p>${p.d[lang]}</p>
       <div class="meta"><span class="dur">${p.dur[lang]}</span><span class="price">${fmtPrice(p.price)}</span></div>
@@ -1351,6 +1491,14 @@ function renderPrograms(){
       <button class="pbtn" data-prog="${p.n}">${T("js.scheduleBtn")}</button>
     </article>`;
   }).join("");
+  const dots = $("#progDots");
+  if(dots){
+    dots.innerHTML = items.map((p,i)=>`
+      <button type="button" role="tab" data-idx="${i}" aria-label="${p.t[lang]}" ${i===ProgWheel.active?'class="on"':''}></button>`).join("");
+    dots.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click",()=>ProgWheel.goTo(+btn.dataset.idx, true, false));
+    });
+  }
   $$("#progGrid .pbtn").forEach(b=>{
     if(!b.dataset.prog) return;
     b.addEventListener("click",()=>{
@@ -1359,6 +1507,88 @@ function renderPrograms(){
       document.getElementById("book").scrollIntoView({behavior:"smooth"});
     });
   });
+  ProgWheel.apply(false);
+}
+function initProgCarousel(){
+  const sec = $("#programs");
+  const ring = $("#progGrid");
+  const stage = $("#progStage");
+  if(!sec || !ring || !stage) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce){ sec.classList.add("prog-static"); return; }
+  if(ProgWheel.ready){ ProgWheel.apply(false); return; }
+  ProgWheel.ready = true;
+
+  let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
+  let lastX = 0, lastT = 0, velocity = 0, raf = 0;
+  const sensitivity = ()=> 0.07 * (360 / Math.max(stage.clientWidth, 280));
+
+  const onDown = (e)=>{
+    if(ProgWheel.busy || katanaBusy) return;
+    if(e.target.closest && e.target.closest("a,button,.pbtn")) return;
+    if(e.pointerType === "mouse" && e.button !== 0) return;
+    dragging = true; axis = null;
+    startX = lastX = e.clientX; startY = e.clientY;
+    startRot = ProgWheel.rot; velocity = 0; lastT = performance.now();
+    ring.classList.remove("snap");
+    sec.classList.add("is-dragging");
+    stage.setPointerCapture?.(e.pointerId);
+    cancelAnimationFrame(raf);
+  };
+  const onMove = (e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
+      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if(axis === "y"){ dragging = false; sec.classList.remove("is-dragging"); return; }
+    }
+    if(axis !== "x") return;
+    e.preventDefault();
+    const now = performance.now();
+    const dt = Math.max(now - lastT, 1);
+    velocity = (e.clientX - lastX) / dt;
+    lastX = e.clientX; lastT = now;
+    ProgWheel.rot = startRot + dx * sensitivity();
+    ProgWheel.apply(false);
+  };
+  const settle = ()=>{
+    const n = I18N.programs.length || 1;
+    const step = 360 / n;
+    let v = velocity * 7;
+    const tick = ()=>{
+      if(Math.abs(v) < 0.04){
+        const idx = Math.round((-ProgWheel.rot) / step);
+        ProgWheel.goTo(((idx % n) + n) % n, true, false);
+        return;
+      }
+      ProgWheel.rot += v * sensitivity() * 6;
+      v *= 0.88;
+      ProgWheel.apply(false);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  };
+  const onUp = ()=>{
+    if(!dragging && axis !== "x"){ sec.classList.remove("is-dragging"); return; }
+    const wasDragX = axis === "x";
+    dragging = false;
+    sec.classList.remove("is-dragging");
+    if(wasDragX) settle();
+    axis = null;
+  };
+
+  stage.addEventListener("pointerdown", onDown);
+  stage.addEventListener("pointermove", onMove, {passive:false});
+  stage.addEventListener("pointerup", onUp);
+  stage.addEventListener("pointercancel", onUp);
+  stage.addEventListener("lostpointercapture", onUp);
+  stage.tabIndex = 0;
+  stage.addEventListener("keydown", (e)=>{
+    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active+1, true, false); }
+    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active-1, true, false); }
+  });
+  ProgWheel.apply(false);
 }
 
 /* ----- program select (value = program number, stable across languages) ----- */
@@ -1653,6 +1883,7 @@ const io=new IntersectionObserver((es)=>{
 $$(".reveal").forEach(el=>io.observe(el));
 
 initPhiloScroll();
+initProgCarousel();
 
 /* ===== Esfumado al bajar + polvo dorado (apto móvil) ===== */
 (function(){
