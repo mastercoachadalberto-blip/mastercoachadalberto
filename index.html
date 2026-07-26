@@ -228,6 +228,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
 }
 .philo-stage:active,.philo.is-dragging .philo-stage{cursor:grabbing}
+.philo.is-dragging .pcard,
+.programs.is-dragging .prog{
+  transition:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
 /* katana FX (global) */
 .katana-fx{
   position:fixed;inset:0;z-index:240;pointer-events:none;overflow:hidden;
@@ -303,11 +309,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(18,18,20,.82) 55%),rgba(18,18,20,.78);
   border:1px solid rgba(200,162,74,.22);
   box-shadow:0 0 0 1px rgba(200,162,74,.04), 0 18px 50px -28px rgba(0,0,0,.75);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   transform:rotateY(var(--i)) translateZ(var(--radius));
   transform-style:preserve-3d;backface-visibility:hidden;
   opacity:.28;filter:saturate(.7) brightness(.72);
-  transition:opacity .35s var(--ease),filter .35s var(--ease),border-color .35s var(--ease),background .35s var(--ease),box-shadow .35s var(--ease);
+  transition:opacity .25s var(--ease),filter .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);
 }
 .pcard::before{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
   background:radial-gradient(120% 80% at 100% 0,rgba(200,162,74,.12),transparent 55%);opacity:0;transition:opacity .35s var(--ease)}
@@ -322,6 +327,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   border-color:rgba(200,162,74,.65);
   background:linear-gradient(165deg,rgba(200,162,74,.08),rgba(255,255,255,0) 60%),var(--onyx-2);
   box-shadow:0 0 0 1px rgba(200,162,74,.16), 0 28px 70px -24px rgba(200,162,74,.55), 0 30px 80px -36px rgba(0,0,0,.85);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
 }
 .pcard.lit::before{opacity:1}
 .pcard.lit .glyph{border-color:var(--gold);background:var(--gold);color:#0A0A0B}
@@ -383,11 +389,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(18,18,20,.88) 55%),rgba(18,18,20,.86);
   display:flex;flex-direction:column;overflow:hidden;
   box-shadow:0 0 0 1px rgba(200,162,74,.04), 0 18px 50px -28px rgba(0,0,0,.75);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
   transform:rotateY(var(--i)) translateZ(var(--radius));
   transform-style:preserve-3d;backface-visibility:hidden;
   opacity:.28;filter:saturate(.7) brightness(.72);
-  transition:opacity .35s var(--ease),filter .35s var(--ease),border-color .35s var(--ease),background .35s var(--ease),box-shadow .35s var(--ease);
+  transition:opacity .25s var(--ease),filter .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);
   pointer-events:none;
 }
 .prog::after{content:"";position:absolute;inset:0;border-radius:14px;border:1px solid transparent;pointer-events:none;
@@ -409,6 +414,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   border-color:rgba(200,162,74,.65);
   background:linear-gradient(165deg,rgba(200,162,74,.1),rgba(18,18,20,.92) 55%),rgba(18,18,20,.9);
   box-shadow:0 0 0 1px rgba(200,162,74,.16), 0 28px 70px -24px rgba(200,162,74,.5), 0 30px 80px -36px rgba(0,0,0,.85);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
 }
 .prog.lit::after{opacity:1}
 .prog.lit h3{color:var(--gold-lt)}
@@ -1161,26 +1167,37 @@ const PhiloWheel = {
   active: 0,
   ready: false,
   busy: false,
-  apply(snap){
+  cards: [],
+  dots: [],
+  refresh(){
+    this.cards = $$("#philoRing .pcard");
+    this.dots = $$("#philoDots button");
+  },
+  paint(snap){
     const ring = $("#philoRing");
-    const sec = $("#philo");
-    if(!ring || !sec) return;
-    const n = I18N.philosophy.length || 1;
-    const step = 360 / n;
+    if(!ring) return;
     ring.classList.toggle("snap", !!snap);
     ring.style.setProperty("--rot", this.rot.toFixed(3) + "deg");
+  },
+  sync(){
+    const n = I18N.philosophy.length || 1;
+    const step = 360 / n;
     let idx = Math.round((-this.rot) / step) % n;
     if(idx < 0) idx += n;
     this.active = idx;
-    $$("#philoRing .pcard").forEach((c,i)=>{
+    if(!this.cards.length) this.refresh();
+    this.cards.forEach((c,i)=>{
       const dist = Math.min(Math.abs(i-idx), n - Math.abs(i-idx));
       c.classList.toggle("lit", i===idx);
       c.classList.toggle("near", dist===1);
-      c.setAttribute("aria-hidden", i===idx ? "false" : "true");
     });
     const activeEl = $("#philoActive");
     if(activeEl) activeEl.textContent = String(idx+1).padStart(2,"0");
-    $$("#philoDots button").forEach((b,i)=>b.classList.toggle("on", i===idx));
+    this.dots.forEach((b,i)=>b.classList.toggle("on", i===idx));
+  },
+  apply(snap){
+    this.paint(snap);
+    this.sync();
   },
   goTo(idx, snap=true, fx=false){
     if(this.busy) return;
@@ -1203,7 +1220,7 @@ const PhiloWheel = {
     }
     this.busy = true;
     katanaBusy = true;
-    const fromCard = $(`#philoRing .pcard[data-idx="${this.active}"]`) || $("#philoRing .pcard.lit");
+    const fromCard = this.cards[this.active] || $("#philoRing .pcard.lit");
     runKatanaCut(fromCard, ()=>{ katanaBusy = false; move(); });
   }
 };
@@ -1289,6 +1306,7 @@ function renderPhilo(){
       card.addEventListener("click",()=>openPhiloMeditation(+card.dataset.idx, card));
     });
   }
+  PhiloWheel.refresh();
   PhiloWheel.apply(false);
 }
 function openPhiloMeditation(idx, cutEl){
@@ -1323,24 +1341,28 @@ function initPhiloScroll(){
   if(!sec || !ring || !stage) return;
   const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(reduce){ sec.classList.add("philo-static"); return; }
-  if(PhiloWheel.ready){ PhiloWheel.apply(false); return; }
+  if(PhiloWheel.ready){ PhiloWheel.refresh(); PhiloWheel.apply(false); return; }
   PhiloWheel.ready = true;
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
-  let lastX = 0, lastT = 0, velocity = 0, raf = 0;
-
+  let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
   const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
 
   const onDown = (e)=>{
-    if(PhiloWheel.busy) return;
+    if(PhiloWheel.busy || gesturing) return;
     if(e.pointerType === "mouse" && e.button !== 0) return;
-    dragging = true; axis = null;
-    startX = lastX = e.clientX; startY = e.clientY;
+    gesturing = true; dragging = true; axis = null;
+    startX = lastX = pendingX = e.clientX; startY = e.clientY;
     startRot = PhiloWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
     sec.classList.add("is-dragging");
     stage.setPointerCapture?.(e.pointerId);
-    cancelAnimationFrame(raf);
+  };
+  const flushMove = ()=>{
+    moveRaf = 0;
+    if(!dragging || axis !== "x") return;
+    PhiloWheel.rot = startRot + (pendingX - startX) * sensitivity();
+    PhiloWheel.paint(false);
   };
   const onMove = (e)=>{
     if(!dragging) return;
@@ -1348,42 +1370,33 @@ function initPhiloScroll(){
     const dy = e.clientY - startY;
     if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
       axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if(axis === "y"){ dragging = false; sec.classList.remove("is-dragging"); return; }
+      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); return; }
+      sec.classList.add("has-dragged");
     }
     if(axis !== "x") return;
     e.preventDefault();
     const now = performance.now();
-    const dt = Math.max(now - lastT, 1);
-    velocity = (e.clientX - lastX) / dt;
-    lastX = e.clientX; lastT = now;
-    PhiloWheel.rot = startRot + dx * sensitivity();
-    PhiloWheel.apply(false);
-    sec.classList.add("has-dragged");
+    velocity = (e.clientX - lastX) / Math.max(now - lastT, 1);
+    lastX = e.clientX; lastT = now; pendingX = e.clientX;
+    if(!moveRaf) moveRaf = requestAnimationFrame(flushMove);
   };
   const settle = ()=>{
     const n = I18N.philosophy.length || 1;
-    const step = 360 / n;
-    let v = velocity * 14;
-    const tick = ()=>{
-      if(Math.abs(v) < 0.08){
-        const idx = Math.round((-PhiloWheel.rot) / step);
-        PhiloWheel.goTo(((idx % n) + n) % n, true, false);
-        return;
-      }
-      PhiloWheel.rot += v * sensitivity() * 11;
-      v *= 0.91;
-      PhiloWheel.apply(false);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+    let idx = Math.round((-PhiloWheel.rot) / (360 / n));
+    if(velocity < -0.35) idx += 1;
+    else if(velocity > 0.35) idx -= 1;
+    PhiloWheel.goTo(((idx % n) + n) % n, true, false);
   };
   const onUp = (e)=>{
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    if(!gesturing) return;
     const wasDragX = axis === "x";
-    const tapped = dragging && !wasDragX && Math.hypot(dx, dy) < 10;
-    if(!dragging && axis !== "x"){ sec.classList.remove("is-dragging"); return; }
-    dragging = false;
+    const tapped = dragging && !wasDragX && Math.hypot(e.clientX - startX, e.clientY - startY) < 10;
+    if(moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; }
+    if(wasDragX){
+      PhiloWheel.rot = startRot + ((e.clientX || pendingX) - startX) * sensitivity();
+      PhiloWheel.paint(false);
+    }
+    gesturing = false; dragging = false;
     sec.classList.remove("is-dragging");
     if(wasDragX) settle();
     else if(tapped) openActivePhiloMeditation();
@@ -1394,15 +1407,13 @@ function initPhiloScroll(){
   stage.addEventListener("pointermove", onMove, {passive:false});
   stage.addEventListener("pointerup", onUp);
   stage.addEventListener("pointercancel", onUp);
-  stage.addEventListener("lostpointercapture", onUp);
-
   stage.tabIndex = 0;
   stage.addEventListener("keydown", (e)=>{
     if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active+1, true, false); }
     if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active-1, true, false); }
     if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openActivePhiloMeditation(); }
   });
-
+  PhiloWheel.refresh();
   PhiloWheel.apply(false);
 }
 
@@ -1413,25 +1424,37 @@ const ProgWheel = {
   active: 0,
   ready: false,
   busy: false,
-  apply(snap){
+  cards: [],
+  dots: [],
+  refresh(){
+    this.cards = $$("#progGrid .prog");
+    this.dots = $$("#progDots button");
+  },
+  paint(snap){
     const ring = $("#progGrid");
     if(!ring) return;
-    const n = I18N.programs.length || 1;
-    const step = 360 / n;
     ring.classList.toggle("snap", !!snap);
     ring.style.setProperty("--rot", this.rot.toFixed(3) + "deg");
+  },
+  sync(){
+    const n = I18N.programs.length || 1;
+    const step = 360 / n;
     let idx = Math.round((-this.rot) / step) % n;
     if(idx < 0) idx += n;
     this.active = idx;
-    $$("#progGrid .prog").forEach((c,i)=>{
+    if(!this.cards.length) this.refresh();
+    this.cards.forEach((c,i)=>{
       const dist = Math.min(Math.abs(i-idx), n - Math.abs(i-idx));
       c.classList.toggle("lit", i===idx);
       c.classList.toggle("near", dist===1);
-      c.setAttribute("aria-hidden", i===idx ? "false" : "true");
     });
     const activeEl = $("#progActive");
     if(activeEl) activeEl.textContent = String(idx+1).padStart(2,"0");
-    $$("#progDots button").forEach((b,i)=>b.classList.toggle("on", i===idx));
+    this.dots.forEach((b,i)=>b.classList.toggle("on", i===idx));
+  },
+  apply(snap){
+    this.paint(snap);
+    this.sync();
   },
   goTo(idx, snap=true, fx=false){
     if(this.busy) return;
@@ -1451,7 +1474,7 @@ const ProgWheel = {
     if(!fx || !changing){ move(); return; }
     this.busy = true;
     katanaBusy = true;
-    const fromCard = $(`#progGrid .prog[data-idx="${this.active}"]`) || $("#progGrid .prog.lit");
+    const fromCard = this.cards[this.active] || $("#progGrid .prog.lit");
     runKatanaCut(fromCard, ()=>{ katanaBusy = false; move(); });
   }
 };
@@ -1494,6 +1517,7 @@ function renderPrograms(){
       document.getElementById("book").scrollIntoView({behavior:"smooth"});
     });
   });
+  ProgWheel.refresh();
   ProgWheel.apply(false);
 }
 function initProgCarousel(){
@@ -1503,24 +1527,29 @@ function initProgCarousel(){
   if(!sec || !ring || !stage) return;
   const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(reduce){ sec.classList.add("prog-static"); return; }
-  if(ProgWheel.ready){ ProgWheel.apply(false); return; }
+  if(ProgWheel.ready){ ProgWheel.refresh(); ProgWheel.apply(false); return; }
   ProgWheel.ready = true;
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
-  let lastX = 0, lastT = 0, velocity = 0, raf = 0;
+  let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
   const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
 
   const onDown = (e)=>{
-    if(ProgWheel.busy || katanaBusy) return;
+    if(ProgWheel.busy || katanaBusy || gesturing) return;
     if(e.target.closest && e.target.closest("a,button,.pbtn")) return;
     if(e.pointerType === "mouse" && e.button !== 0) return;
-    dragging = true; axis = null;
-    startX = lastX = e.clientX; startY = e.clientY;
+    gesturing = true; dragging = true; axis = null;
+    startX = lastX = pendingX = e.clientX; startY = e.clientY;
     startRot = ProgWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
     sec.classList.add("is-dragging");
     stage.setPointerCapture?.(e.pointerId);
-    cancelAnimationFrame(raf);
+  };
+  const flushMove = ()=>{
+    moveRaf = 0;
+    if(!dragging || axis !== "x") return;
+    ProgWheel.rot = startRot + (pendingX - startX) * sensitivity();
+    ProgWheel.paint(false);
   };
   const onMove = (e)=>{
     if(!dragging) return;
@@ -1528,38 +1557,31 @@ function initProgCarousel(){
     const dy = e.clientY - startY;
     if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
       axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if(axis === "y"){ dragging = false; sec.classList.remove("is-dragging"); return; }
+      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); return; }
     }
     if(axis !== "x") return;
     e.preventDefault();
     const now = performance.now();
-    const dt = Math.max(now - lastT, 1);
-    velocity = (e.clientX - lastX) / dt;
-    lastX = e.clientX; lastT = now;
-    ProgWheel.rot = startRot + dx * sensitivity();
-    ProgWheel.apply(false);
+    velocity = (e.clientX - lastX) / Math.max(now - lastT, 1);
+    lastX = e.clientX; lastT = now; pendingX = e.clientX;
+    if(!moveRaf) moveRaf = requestAnimationFrame(flushMove);
   };
   const settle = ()=>{
     const n = I18N.programs.length || 1;
-    const step = 360 / n;
-    let v = velocity * 14;
-    const tick = ()=>{
-      if(Math.abs(v) < 0.08){
-        const idx = Math.round((-ProgWheel.rot) / step);
-        ProgWheel.goTo(((idx % n) + n) % n, true, false);
-        return;
-      }
-      ProgWheel.rot += v * sensitivity() * 11;
-      v *= 0.91;
-      ProgWheel.apply(false);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+    let idx = Math.round((-ProgWheel.rot) / (360 / n));
+    if(velocity < -0.35) idx += 1;
+    else if(velocity > 0.35) idx -= 1;
+    ProgWheel.goTo(((idx % n) + n) % n, true, false);
   };
-  const onUp = ()=>{
-    if(!dragging && axis !== "x"){ sec.classList.remove("is-dragging"); return; }
+  const onUp = (e)=>{
+    if(!gesturing) return;
     const wasDragX = axis === "x";
-    dragging = false;
+    if(moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; }
+    if(wasDragX){
+      ProgWheel.rot = startRot + ((e.clientX || pendingX) - startX) * sensitivity();
+      ProgWheel.paint(false);
+    }
+    gesturing = false; dragging = false;
     sec.classList.remove("is-dragging");
     if(wasDragX) settle();
     axis = null;
@@ -1569,12 +1591,12 @@ function initProgCarousel(){
   stage.addEventListener("pointermove", onMove, {passive:false});
   stage.addEventListener("pointerup", onUp);
   stage.addEventListener("pointercancel", onUp);
-  stage.addEventListener("lostpointercapture", onUp);
   stage.tabIndex = 0;
   stage.addEventListener("keydown", (e)=>{
     if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active+1, true, false); }
     if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active-1, true, false); }
   });
+  ProgWheel.refresh();
   ProgWheel.apply(false);
 }
 
