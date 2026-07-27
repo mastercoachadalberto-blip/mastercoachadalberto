@@ -497,8 +497,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .hub-meta b{color:var(--gold-lt);font-weight:500;font-variant-numeric:tabular-nums}
 .hub-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.55}
 .hub-stage{
-  position:relative;z-index:2;perspective:1800px;perspective-origin:50% 18%;
-  height:min(560px,68vh);margin-top:20px;
+  position:relative;z-index:2;perspective:1800px;perspective-origin:50% 40%;
+  height:min(520px,64vh);margin-top:8px;
   display:flex;align-items:center;justify-content:center;
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
 }
@@ -507,7 +507,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   --rot:0deg; --radius:1450px;
   position:relative;width:1px;height:1px;
   transform-style:preserve-3d;
-  transform:rotateX(24deg) rotateY(var(--rot));
+  transform:translateY(-130px) rotateX(-14deg) rotateY(var(--rot));
   will-change:transform;pointer-events:none;
 }
 .hub-ring.snap{transition:transform .65s var(--ease)}
@@ -729,8 +729,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .prog{min-height:400px;margin-top:-200px;padding:28px 22px 22px}
   .prog h3{font-size:1.35rem}
   .hub-ring{--radius:560px}
-  .hub-stage{height:min(480px,62vh)}
-  .hub-ring{transform:rotateX(20deg) rotateY(var(--rot))}
+  .hub-stage{height:min(440px,58vh)}
+  .hub-ring{transform:translateY(-100px) rotateX(-12deg) rotateY(var(--rot))}
   .hub-bg{
     top:210px;
     bottom:70px;
@@ -753,7 +753,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       linear-gradient(180deg,rgba(10,10,11,.55) 0%,rgba(10,10,11,.28) 35%,rgba(10,10,11,.32) 65%,rgba(10,10,11,.78) 100%),
       radial-gradient(70% 55% at 50% 50%,rgba(10,10,11,.15),rgba(10,10,11,.55) 88%);
   }
-  .post{min-height:220px;margin-top:-110px;padding:22px 20px}
+  .post{min-height:220px;margin-top:-140px;padding:22px 20px}
   .post h4{font-size:1.28rem}
   .nav-links{display:none}.nav-cta{display:none}.burger{display:flex}
   .hero-bg img{width:100%;opacity:.42;object-position:50% 16%}
@@ -1784,7 +1784,7 @@ const HubWheel = {
       if(ang > 180) ang -= 360;
       if(ang < -180) ang += 360;
       const abs = Math.abs(ang);
-      const drop = Math.min(210, abs * abs * 0.028 + abs * 1.15);
+      const drop = Math.min(90, abs * abs * 0.014 + abs * 0.55);
       c.style.setProperty("--drop", drop.toFixed(1) + "px");
     });
   },
@@ -1811,6 +1811,7 @@ const HubWheel = {
   },
   goTo(idx, snap=true){
     if(this.busy) return;
+    if(typeof this.pauseAuto === "function") this.pauseAuto();
     const n = this.items.length || 1;
     if(!n) return;
     const step = 360 / n;
@@ -1823,6 +1824,7 @@ const HubWheel = {
   },
   openActive(){
     if(!this.items.length) return;
+    if(typeof this.pauseAuto === "function") this.pauseAuto();
     const postIdx = this.items[this.active];
     if(postIdx == null) return;
     const card = this.cards[this.active];
@@ -1900,12 +1902,23 @@ function initHubCarousel(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
+  let autoPaused = false, pauseTimer = 0, spinRaf = 0, lastSpin = 0, lastSync = 0, inView = true;
   const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
+  const SPIN = 0.018; /* deg/ms ≈ 18°/s */
+
+  const pauseAuto = (ms=4200)=>{
+    autoPaused = true;
+    if(pauseTimer) clearTimeout(pauseTimer);
+    pauseTimer = setTimeout(()=>{ autoPaused = false; lastSpin = performance.now(); }, ms);
+  };
+  HubWheel.pauseAuto = pauseAuto;
 
   const onDown = (e)=>{
     if(HubWheel.busy || katanaBusy || gesturing || !HubWheel.items.length) return;
     if(e.pointerType === "mouse" && e.button !== 0) return;
     gesturing = true; dragging = true; axis = null;
+    autoPaused = true;
+    if(pauseTimer) clearTimeout(pauseTimer);
     startX = lastX = pendingX = e.clientX; startY = e.clientY;
     startRot = HubWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
@@ -1924,7 +1937,7 @@ function initHubCarousel(){
     const dy = e.clientY - startY;
     if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
       axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); return; }
+      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); pauseAuto(); return; }
     }
     if(axis !== "x") return;
     e.preventDefault();
@@ -1954,7 +1967,36 @@ function initHubCarousel(){
     if(wasDragX) settle();
     else if(tapped) HubWheel.openActive();
     axis = null;
+    pauseAuto();
   };
+
+  const tick = (t)=>{
+    spinRaf = requestAnimationFrame(tick);
+    if(!lastSpin) lastSpin = t;
+    const modalOpen = modal && modal.classList.contains("open");
+    if(autoPaused || gesturing || dragging || HubWheel.busy || katanaBusy || !inView || document.hidden || modalOpen || !HubWheel.items.length){
+      lastSpin = t;
+      return;
+    }
+    ring.classList.remove("snap");
+    const dt = Math.min(t - lastSpin, 48);
+    lastSpin = t;
+    HubWheel.rot -= SPIN * dt;
+    HubWheel.paint(false);
+    if(t - lastSync > 120){
+      HubWheel.sync();
+      lastSync = t;
+    }
+  };
+  spinRaf = requestAnimationFrame(tick);
+
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries)=>{
+      inView = entries.some(en => en.isIntersecting && en.intersectionRatio > 0.12);
+      if(inView) lastSpin = performance.now();
+    }, {threshold:[0, 0.12, 0.35]});
+    io.observe(sec);
+  }
 
   stage.addEventListener("pointerdown", onDown);
   stage.addEventListener("pointermove", onMove, {passive:false});
