@@ -222,8 +222,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .philo.is-dragging .philo-hint,.philo.has-dragged .philo-hint{opacity:0}
 @keyframes philoCue{0%,100%{transform:scaleX(.55);opacity:.35}50%{transform:scaleX(1);opacity:1}}
 .philo-stage{
-  position:relative;z-index:2;perspective:1800px;perspective-origin:50% 45%;
-  height:min(460px,56vh);margin-top:10px;
+  position:relative;z-index:2;perspective:2000px;perspective-origin:50% 45%;
+  height:min(480px,58vh);margin-top:10px;
   display:flex;align-items:center;justify-content:center;
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
 }
@@ -292,7 +292,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .is-cutting{opacity:0!important;transition:none!important}
 .philo-fx{display:none}
 .philo-ring{
-  --rot:0deg; --radius:480px;
+  --rot:0deg; --radius:600px;
   position:relative;width:1px;height:1px;
   transform-style:preserve-3d;
   transform:rotateY(var(--rot));
@@ -302,8 +302,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .pcard{
   --i:0deg;
   position:absolute;left:50%;top:50%;
-  width:min(260px,68vw);min-height:240px;
-  margin:-120px 0 0 calc(min(260px,68vw) / -2);
+  width:min(240px,64vw);min-height:240px;
+  margin:-120px 0 0 calc(min(240px,64vw) / -2);
   padding:30px 26px 28px;border-radius:14px;
   display:flex;flex-direction:column;
   background:linear-gradient(165deg,rgba(255,255,255,.04),rgba(18,18,20,.82) 55%),rgba(18,18,20,.78);
@@ -609,7 +609,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 /* ============================== RESPONSIVE ============================== */
 @media(max-width:1000px){
-  .philo-ring{--radius:360px}
+  .philo-ring{--radius:460px}
   .philo.philo-static .philo-ring{grid-template-columns:repeat(2,1fr)}
   .prog-ring{--radius:320px}
   .programs.prog-static .prog-ring{grid-template-columns:repeat(2,1fr)}
@@ -620,7 +620,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 @media(max-width:760px){
   .section{padding:90px 0}
   .philo-bg{background-position:center center}
-  .philo-ring{--radius:250px}
+  .philo-ring{--radius:320px}
   .pcard{min-height:220px;padding:24px 22px 22px;margin-top:-110px}
   .pcard h3{font-size:1.35rem}
   .prog-ring{--radius:240px}
