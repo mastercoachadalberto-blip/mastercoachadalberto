@@ -229,7 +229,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .philo-stage:active,.philo.is-dragging .philo-stage{cursor:grabbing}
 .philo.is-dragging .pcard,
-.programs.is-dragging .prog{
+.programs.is-dragging .prog,
+.hub.is-dragging .post{
   transition:none!important;
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
@@ -442,9 +443,42 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 }
 .programs.prog-static .prog-dots,.programs.prog-static .prog-meta{display:none}
 
-/* ============================== CONTENT HUB ============================== */
-.hub{background:var(--ink);position:relative}
-.hub-controls{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;margin:48px 0 8px}
+/* ============================== CONTENT HUB (carousel) ============================== */
+.hub{background:var(--ink);position:relative;overflow:hidden}
+.hub-bg{
+  position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:var(--ink);
+}
+.hub-bg .hub-slide{
+  position:absolute;
+  inset:6% 7% 10% 7%;
+  background-repeat:no-repeat;
+  background-size:contain;
+  background-position:center center;
+  opacity:0;
+  transform:scale(1.04);
+  filter:saturate(1.1) contrast(1.06) brightness(.96);
+  transition:opacity 2s var(--ease),transform 14s ease;
+}
+.hub-bg .hub-slide.a{
+  inset:3% 0 7% 0;
+  background-image:url("assets/hub-bg-adam.png");
+  background-size:100% auto;
+  background-position:center 48%;
+}
+.hub-bg .hub-slide.b{
+  background-image:url("assets/hub-bg-athens.png");
+}
+.hub-bg .hub-slide.on{opacity:.9;transform:scale(1)}
+.hub-bg .hub-slide.a.on{transform:scale(1.02)}
+.hub-bg::after{
+  content:"";position:absolute;inset:0;z-index:1;
+  background:
+    linear-gradient(180deg,rgba(10,10,11,.58) 0%,rgba(10,10,11,.28) 36%,rgba(10,10,11,.32) 62%,rgba(10,10,11,.82) 100%),
+    radial-gradient(58% 52% at 50% 48%,rgba(10,10,11,.15),rgba(10,10,11,.55) 88%);
+}
+.hub > .wrap{position:relative;z-index:2}
+.hub-controls{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between;margin:36px 0 8px}
 .search{position:relative;flex:1;min-width:240px;max-width:340px}
 .search input{width:100%;background:var(--onyx);border:1px solid var(--line-soft);border-radius:40px;
   padding:14px 18px 14px 44px;color:var(--bone);font-family:var(--sans);font-size:.92rem;font-weight:300;transition:.35s var(--ease)}
@@ -456,18 +490,84 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   padding:9px 16px;border:1px solid var(--line-soft);border-radius:40px;transition:.3s var(--ease)}
 .chip:hover{border-color:var(--line);color:var(--bone)}
 .chip.active{background:var(--gold);color:#0A0A0B;border-color:var(--gold);font-weight:500}
-.hub-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:34px}
-.post{border:1px solid var(--line-soft);border-radius:3px;padding:32px 28px;cursor:pointer;
-  display:flex;flex-direction:column;min-height:230px;transition:.45s var(--ease);background:var(--onyx);position:relative;overflow:hidden}
-.post::before{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:linear-gradient(90deg,var(--gold),transparent);transition:width .5s var(--ease)}
-.post:hover{transform:translateY(-5px);border-color:var(--line)}
-.post:hover::before{width:100%}
+.hub-meta{
+  display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);
+}
+.hub-meta b{color:var(--gold-lt);font-weight:500;font-variant-numeric:tabular-nums}
+.hub-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--gold);opacity:.55}
+.hub-stage{
+  position:relative;z-index:2;perspective:2600px;perspective-origin:50% 45%;
+  height:min(500px,60vh);margin-top:28px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
+}
+.hub-stage:active,.hub.is-dragging .hub-stage{cursor:grabbing}
+.hub-ring{
+  --rot:0deg; --radius:1450px;
+  position:relative;width:1px;height:1px;
+  transform-style:preserve-3d;
+  transform:rotateY(var(--rot));
+  will-change:transform;pointer-events:none;
+}
+.hub-ring.snap{transition:transform .6s var(--ease)}
+.post{
+  --i:0deg;
+  position:absolute;left:50%;top:50%;
+  width:min(230px,62vw);min-height:236px;
+  margin:-118px 0 0 calc(min(230px,62vw) / -2);
+  border:1px solid rgba(200,162,74,.22);border-radius:14px;padding:28px 24px 24px;
+  background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(18,18,20,.78) 55%),rgba(18,18,20,.68);
+  display:flex;flex-direction:column;overflow:hidden;cursor:pointer;
+  box-shadow:0 0 0 1px rgba(200,162,74,.04), 0 18px 50px -28px rgba(0,0,0,.75);
+  transform:rotateY(var(--i)) translateZ(var(--radius));
+  transform-style:preserve-3d;backface-visibility:hidden;
+  opacity:0;filter:saturate(.7) brightness(.72);
+  transition:opacity .25s var(--ease),filter .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);
+  pointer-events:none;
+}
+.post::before{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
+  background:radial-gradient(120% 80% at 100% 0,rgba(200,162,74,.12),transparent 55%);opacity:0;transition:opacity .35s var(--ease)}
 .post .cat{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
-.post h4{font-family:var(--serif);font-size:1.5rem;font-weight:600;color:var(--bone);margin:14px 0 0;line-height:1.18}
-.post p{font-size:.93rem;color:var(--muted);margin:14px 0 0;flex-grow:1}
-.post .more{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);margin-top:20px;display:inline-flex;align-items:center;gap:8px;transition:.3s}
-.post:hover .more{color:var(--gold-lt);gap:13px}
-.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 0;font-style:italic;font-family:var(--serif);font-size:1.3rem}
+.post h4{font-family:var(--serif);font-size:1.45rem;font-weight:600;color:var(--bone);margin:14px 0 0;line-height:1.18}
+.post p{font-size:.9rem;color:var(--muted);margin:14px 0 0;flex-grow:1;line-height:1.55}
+.post .more{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone-dim);margin-top:18px;display:inline-flex;align-items:center;gap:8px}
+.post.lit{
+  opacity:1;filter:none;z-index:2;pointer-events:auto;
+  border-color:rgba(200,162,74,.65);
+  background:linear-gradient(165deg,rgba(200,162,74,.12),rgba(18,18,20,.78) 55%),rgba(18,18,20,.7);
+  box-shadow:0 0 0 1px rgba(200,162,74,.16), 0 28px 70px -24px rgba(200,162,74,.5);
+  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+.post.lit::before{opacity:1}
+.post.lit h4{color:var(--gold-lt)}
+.post.lit .more{color:var(--gold-lt)}
+.post.near{opacity:.48;filter:saturate(.85) brightness(.86)}
+.post.far{opacity:0;filter:saturate(.5) brightness(.55)}
+.hub-dots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:28px;position:relative;z-index:3}
+.hub-dots button{
+  width:7px;height:7px;border-radius:50%;padding:0;
+  background:rgba(236,232,223,.22);border:1px solid transparent;transition:.35s var(--ease);
+}
+.hub-dots button.on{background:var(--gold);box-shadow:0 0 0 4px rgba(200,162,74,.14);transform:scale(1.15)}
+.hub-empty{text-align:center;color:var(--muted);padding:60px 0;font-style:italic;font-family:var(--serif);font-size:1.3rem;display:none}
+.hub.is-empty .hub-stage,.hub.is-empty .hub-dots,.hub.is-empty .hub-meta{display:none}
+.hub.is-empty .hub-empty{display:block}
+.hub.hub-static .hub-stage{perspective:none;height:auto;cursor:default;margin-top:34px}
+.hub.hub-static .hub-ring{
+  width:100%;height:auto;transform:none!important;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+}
+.hub.hub-static .post{
+  position:relative;left:auto;top:auto;margin:0;width:auto;min-height:230px;opacity:1;filter:none;
+  transform:none!important;pointer-events:auto;
+}
+.hub.hub-static .hub-dots,.hub.hub-static .hub-meta{display:none}
+.hub.is-dragging .post{
+  transition:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
 
 /* modal */
 .modal{position:fixed;inset:0;z-index:260;display:flex;align-items:center;justify-content:center;padding:24px;
@@ -612,8 +712,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .philo-ring{--radius:460px}
   .philo.philo-static .philo-ring{grid-template-columns:repeat(2,1fr)}
   .prog-ring{--radius:320px}
-  .programs.prog-static .prog-ring{grid-template-columns:repeat(2,1fr)}
-  .hub-grid{grid-template-columns:repeat(2,1fr)}
+  .hub-ring{--radius:920px}
+  .hub.hub-static .hub-ring{grid-template-columns:repeat(2,1fr)}
   .about-grid,.book-grid,.app-grid{grid-template-columns:1fr;gap:48px}
   .about-portrait{max-width:460px;margin:0 auto}
 }
@@ -627,13 +727,25 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .prog-stage{height:min(540px,78vh)}
   .prog{min-height:400px;margin-top:-200px;padding:28px 22px 22px}
   .prog h3{font-size:1.35rem}
+  .hub-ring{--radius:560px}
+  .hub-stage{height:min(420px,56vh)}
+  .hub-bg .hub-slide{inset:8% 5% 12% 5%}
+  .hub-bg .hub-slide.a{inset:5% 0 10% 0;background-size:100% auto}
+  .hub-bg .hub-slide.a.on{transform:scale(1.02)}
+  .hub-bg::after{
+    background:
+      linear-gradient(180deg,rgba(10,10,11,.62) 0%,rgba(10,10,11,.32) 40%,rgba(10,10,11,.36) 65%,rgba(10,10,11,.85) 100%),
+      radial-gradient(70% 55% at 50% 48%,rgba(10,10,11,.18),rgba(10,10,11,.58) 88%);
+  }
+  .post{min-height:220px;margin-top:-110px;padding:22px 20px}
+  .post h4{font-size:1.28rem}
   .nav-links{display:none}.nav-cta{display:none}.burger{display:flex}
   .hero-bg img{width:100%;opacity:.42;object-position:50% 16%}
   .hero-bg::after{background:linear-gradient(180deg,rgba(10,10,11,.4) 0%,rgba(10,10,11,.7) 45%,var(--ink) 92%)}
   .hero-content{max-width:100%}
-  .hub-grid{grid-template-columns:1fr}
   .philo.philo-static .philo-ring{grid-template-columns:1fr}
   .programs.prog-static .prog-ring{grid-template-columns:1fr}
+  .hub.hub-static .hub-ring{grid-template-columns:1fr}
   .modal-box{padding:34px 26px}
   .slots{grid-template-columns:repeat(3,1fr)}
   .foot-top{flex-direction:column}
@@ -878,6 +990,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
 <!-- ===================== CONTENT HUB ===================== -->
 <section class="section hub" id="hub">
+  <div class="hub-bg" aria-hidden="true">
+    <div class="hub-slide a on"></div>
+    <div class="hub-slide b"></div>
+  </div>
   <div class="wrap">
     <div class="eyebrow reveal" data-i18n="hub.eyebrow">Biblioteca de Contenido</div>
     <h2 class="s-title reveal d1" data-i18n-html="hub.title">Reflexiones para <em>la mente</em></h2>
@@ -888,7 +1004,16 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       </div>
       <div class="filters" id="hubFilters"></div>
     </div>
-    <div class="hub-grid" id="hubGrid"></div>
+    <div class="hub-meta reveal d2" aria-live="polite">
+      <b id="hubActive">01</b>
+      <span class="dot" aria-hidden="true"></span>
+      <span id="hubTotal">12</span>
+    </div>
+    <div class="hub-stage" id="hubStage" aria-roledescription="carrusel" aria-label="Biblioteca de contenido">
+      <div class="hub-ring" id="hubGrid"></div>
+    </div>
+    <div class="hub-dots" id="hubDots" role="tablist" aria-label="Contenidos"></div>
+    <div class="hub-empty" id="hubEmpty"></div>
   </div>
 </section>
 
@@ -1234,7 +1359,7 @@ const PhiloWheel = {
     ".chip",".burger",".lang-btn",".lang-select-m button",
     ".tarrow",".modal-close",".share",
     ".foot-cols a",".social a",
-    ".post",".lang-menu li"
+    ".lang-menu li"
   ].join(",");
   document.addEventListener("click", (e)=>{
     if(e.button != null && e.button !== 0) return;
@@ -1243,7 +1368,7 @@ const PhiloWheel = {
     if(el.dataset.katanaGo) return;
     if(el.disabled || el.getAttribute("aria-disabled") === "true") return;
     if(el.closest(".katana-fx") || el.closest(".slice-ghost")) return;
-    // pilares / programas: corte sobre la tarjeta activa
+    // pilares / programas / contenido: corte sobre la tarjeta activa
     if(el.closest("#philoDots")){
       e.preventDefault();
       e.stopPropagation();
@@ -1260,7 +1385,15 @@ const PhiloWheel = {
       ProgWheel.goTo(+el.dataset.idx, true, false);
       return;
     }
-    if(katanaBusy || PhiloWheel.busy || ProgWheel.busy){
+    if(el.closest("#hubDots")){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if(katanaBusy || HubWheel.busy) return;
+      HubWheel.goTo(+el.dataset.idx, true, false);
+      return;
+    }
+    if(katanaBusy || PhiloWheel.busy || ProgWheel.busy || HubWheel.busy){
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -1269,8 +1402,7 @@ const PhiloWheel = {
     e.stopPropagation();
     e.stopImmediatePropagation();
     katanaBusy = true;
-    const cutTarget = el.closest(".post") || el;
-    runKatanaCut(cutTarget, ()=>{
+    runKatanaCut(el, ()=>{
       katanaBusy = false;
       proceedAfterKatana(el);
     });
@@ -1609,8 +1741,72 @@ function renderSelect(){
   if(prev) sel.value=prev;
 }
 
-/* ----- content hub ----- */
+/* ----- content hub (carousel) ----- */
 let activeCat="__all__", query="";
+const HubWheel = {
+  rot: 0,
+  active: 0,
+  ready: false,
+  busy: false,
+  cards: [],
+  dots: [],
+  items: [],
+  refresh(){
+    this.cards = $$("#hubGrid .post");
+    this.dots = $$("#hubDots button");
+  },
+  paint(snap){
+    const ring = $("#hubGrid");
+    if(!ring) return;
+    ring.classList.toggle("snap", !!snap);
+    ring.style.setProperty("--rot", this.rot.toFixed(3) + "deg");
+  },
+  sync(){
+    const n = this.items.length || 1;
+    const step = 360 / n;
+    let idx = Math.round((-this.rot) / step) % n;
+    if(idx < 0) idx += n;
+    this.active = idx;
+    if(!this.cards.length) this.refresh();
+    this.cards.forEach((c,i)=>{
+      const dist = Math.min(Math.abs(i-idx), n - Math.abs(i-idx));
+      c.classList.toggle("lit", i===idx);
+      c.classList.toggle("near", dist===1);
+      c.classList.toggle("far", dist===2);
+    });
+    const activeEl = $("#hubActive");
+    if(activeEl) activeEl.textContent = String((this.items.length?idx+1:0)).padStart(2,"0");
+    this.dots.forEach((b,i)=>b.classList.toggle("on", i===idx));
+  },
+  apply(snap){
+    this.paint(snap);
+    this.sync();
+  },
+  goTo(idx, snap=true){
+    if(this.busy) return;
+    const n = this.items.length || 1;
+    if(!n) return;
+    const step = 360 / n;
+    idx = ((idx % n) + n) % n;
+    const current = -this.rot / step;
+    let delta = idx - current;
+    delta = delta - Math.round(delta / n) * n;
+    this.rot = -((current + delta) * step);
+    this.apply(snap);
+  },
+  openActive(){
+    if(!this.items.length) return;
+    const postIdx = this.items[this.active];
+    if(postIdx == null) return;
+    const card = this.cards[this.active];
+    if(katanaBusy) return;
+    katanaBusy = true;
+    runKatanaCut(card, ()=>{
+      katanaBusy = false;
+      openModal(postIdx);
+    });
+  }
+};
 function renderFilters(){
   const cats = ["__all__", ...new Set(I18N.posts.map(p=>p.cat))];
   $("#hubFilters").innerHTML = cats.map(c=>{
@@ -1625,16 +1821,141 @@ function renderHub(){
     const hay = (p.t[lang]+p.e[lang]+p.b[lang].join(" ")+catLabel(p.cat)).toLowerCase();
     return okCat && (!q || hay.includes(q));
   });
-  const grid=$("#hubGrid");
-  grid.innerHTML = list.length ? list.map(p=>`
-    <article class="post" data-i="${I18N.posts.indexOf(p)}">
+  const sec = $("#hub");
+  const grid = $("#hubGrid");
+  const dots = $("#hubDots");
+  const empty = $("#hubEmpty");
+  const totalEl = $("#hubTotal");
+  HubWheel.items = list.map(p=>I18N.posts.indexOf(p));
+  HubWheel.rot = 0;
+  HubWheel.active = 0;
+  sec.classList.toggle("is-empty", !list.length);
+  if(empty) empty.textContent = T("js.empty");
+  if(totalEl) totalEl.textContent = String(list.length).padStart(2,"0");
+  if(!list.length){
+    grid.innerHTML = "";
+    if(dots) dots.innerHTML = "";
+    HubWheel.cards = []; HubWheel.dots = [];
+    return;
+  }
+  const n = list.length;
+  const step = 360 / n;
+  grid.innerHTML = list.map((p,i)=>`
+    <article class="post" style="--i:${(i*step).toFixed(3)}deg" data-idx="${i}" data-i="${I18N.posts.indexOf(p)}">
       <span class="cat">${catLabel(p.cat)}</span>
       <h4>${p.t[lang]}</h4><p>${p.e[lang]}</p>
       <span class="more">${T("js.readMore")}</span>
-    </article>`).join("")
-    : `<div class="empty">${T("js.empty")}</div>`;
-  $$(".post",grid).forEach(el=>el.addEventListener("click",()=>openModal(+el.dataset.i)));
+    </article>`).join("");
+  if(dots){
+    dots.innerHTML = list.map((p,i)=>`
+      <button type="button" role="tab" data-idx="${i}" aria-label="${p.t[lang]}" ${i===0?'class="on"':''}></button>`).join("");
+    dots.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click",()=>HubWheel.goTo(+btn.dataset.idx, true));
+    });
+  }
+  HubWheel.refresh();
+  HubWheel.apply(false);
+  if(sec.classList.contains("hub-static")){
+    $$("#hubGrid .post").forEach(card=>{
+      card.addEventListener("click",()=>openModal(+card.dataset.i));
+    });
+  }
 }
+function initHubCarousel(){
+  const sec = $("#hub");
+  const ring = $("#hubGrid");
+  const stage = $("#hubStage");
+  if(!sec || !ring || !stage) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce){ sec.classList.add("hub-static"); return; }
+  if(HubWheel.ready){ HubWheel.refresh(); HubWheel.apply(false); return; }
+  HubWheel.ready = true;
+
+  let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
+  let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
+  const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
+
+  const onDown = (e)=>{
+    if(HubWheel.busy || katanaBusy || gesturing || !HubWheel.items.length) return;
+    if(e.pointerType === "mouse" && e.button !== 0) return;
+    gesturing = true; dragging = true; axis = null;
+    startX = lastX = pendingX = e.clientX; startY = e.clientY;
+    startRot = HubWheel.rot; velocity = 0; lastT = performance.now();
+    ring.classList.remove("snap");
+    sec.classList.add("is-dragging");
+    stage.setPointerCapture?.(e.pointerId);
+  };
+  const flushMove = ()=>{
+    moveRaf = 0;
+    if(!dragging || axis !== "x") return;
+    HubWheel.rot = startRot + (pendingX - startX) * sensitivity();
+    HubWheel.paint(false);
+  };
+  const onMove = (e)=>{
+    if(!dragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
+      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); return; }
+    }
+    if(axis !== "x") return;
+    e.preventDefault();
+    const now = performance.now();
+    velocity = (e.clientX - lastX) / Math.max(now - lastT, 1);
+    lastX = e.clientX; lastT = now; pendingX = e.clientX;
+    if(!moveRaf) moveRaf = requestAnimationFrame(flushMove);
+  };
+  const settle = ()=>{
+    const n = HubWheel.items.length || 1;
+    let idx = Math.round((-HubWheel.rot) / (360 / n));
+    if(velocity < -0.35) idx += 1;
+    else if(velocity > 0.35) idx -= 1;
+    HubWheel.goTo(((idx % n) + n) % n, true);
+  };
+  const onUp = (e)=>{
+    if(!gesturing) return;
+    const wasDragX = axis === "x";
+    const tapped = dragging && !wasDragX && Math.hypot(e.clientX - startX, e.clientY - startY) < 10;
+    if(moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; }
+    if(wasDragX){
+      HubWheel.rot = startRot + ((e.clientX || pendingX) - startX) * sensitivity();
+      HubWheel.paint(false);
+    }
+    gesturing = false; dragging = false;
+    sec.classList.remove("is-dragging");
+    if(wasDragX) settle();
+    else if(tapped) HubWheel.openActive();
+    axis = null;
+  };
+
+  stage.addEventListener("pointerdown", onDown);
+  stage.addEventListener("pointermove", onMove, {passive:false});
+  stage.addEventListener("pointerup", onUp);
+  stage.addEventListener("pointercancel", onUp);
+  stage.tabIndex = 0;
+  stage.addEventListener("keydown", (e)=>{
+    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); HubWheel.goTo(HubWheel.active+1, true); }
+    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); HubWheel.goTo(HubWheel.active-1, true); }
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); HubWheel.openActive(); }
+  });
+  HubWheel.refresh();
+  HubWheel.apply(false);
+}
+
+/* fondo artístico: alterna las dos obras */
+(function initHubBg(){
+  const slides = $$("#hub .hub-slide");
+  if(slides.length < 2) return;
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduce) return;
+  let i = 0;
+  setInterval(()=>{
+    slides[i].classList.remove("on");
+    i = (i + 1) % slides.length;
+    slides[i].classList.add("on");
+  }, 8000);
+})();
 
 /* ----- modal ----- */
 const modal=$("#modal");
@@ -1893,6 +2214,7 @@ $$(".reveal").forEach(el=>io.observe(el));
 
 initPhiloScroll();
 initProgCarousel();
+initHubCarousel();
 
 /* ===== Esfumado al bajar + polvo dorado (apto móvil) ===== */
 (function(){
