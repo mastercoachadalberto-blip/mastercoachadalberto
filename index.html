@@ -501,6 +501,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   height:min(520px,64vh);margin-top:8px;
   display:flex;align-items:center;justify-content:center;
   cursor:grab;touch-action:pan-y;user-select:none;-webkit-user-select:none;
+  -webkit-touch-callout:none;
 }
 .hub-stage:active,.hub.is-dragging .hub-stage{cursor:grabbing}
 .hub-ring{
@@ -524,7 +525,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   transform:rotateY(var(--i)) translateZ(var(--radius)) translateY(var(--drop));
   transform-style:preserve-3d;backface-visibility:hidden;
   opacity:0;filter:saturate(.7) brightness(.72);
-  transition:opacity .3s var(--ease),filter .3s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease),transform .35s var(--ease);
+  transition:opacity .25s var(--ease),filter .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);
   pointer-events:none;
 }
 .post::before{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
@@ -543,8 +544,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .post.lit::before{opacity:1}
 .post.lit h4{color:var(--gold-lt)}
 .post.lit .more{color:var(--gold-lt)}
-.post.near{opacity:.55;filter:saturate(.88) brightness(.88)}
-.post.far{opacity:.22;filter:saturate(.6) brightness(.65)}
+.post.near{opacity:.55;filter:saturate(.88) brightness(.88);--drop:42px}
+.post.far{opacity:.22;filter:saturate(.6) brightness(.65);--drop:72px}
 .hub-dots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:28px;position:relative;z-index:3}
 .hub-dots button{
   width:7px;height:7px;border-radius:50%;padding:0;
@@ -753,7 +754,26 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
       linear-gradient(180deg,rgba(10,10,11,.55) 0%,rgba(10,10,11,.28) 35%,rgba(10,10,11,.32) 65%,rgba(10,10,11,.78) 100%),
       radial-gradient(70% 55% at 50% 50%,rgba(10,10,11,.15),rgba(10,10,11,.55) 88%);
   }
-  .post{min-height:220px;margin-top:-140px;padding:22px 20px}
+  .hub-bg .hub-slide{filter:none}
+  .hub-bg .hub-slide.on{opacity:.88}
+  .post.lit,.pcard.lit,.prog.lit{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  }
+  .post,.pcard,.prog{
+    transition:opacity .18s linear,border-color .18s linear!important;
+    filter:none;
+  }
+  .post{min-height:220px;margin-top:-140px;padding:22px 20px;opacity:0}
+  .post.lit{opacity:1}
+  .post.near{opacity:.5;--drop:28px}
+  .post.far{opacity:.16;--drop:48px}
+  .pcard{opacity:.3}
+  .pcard.lit{opacity:1}
+  .pcard.near{opacity:.55}
+  .prog{opacity:.3}
+  .prog.lit{opacity:1}
+  .prog.near{opacity:.55}
+  .philo-stage,.prog-stage,.hub-stage{touch-action:pan-y;cursor:grab}
   .post h4{font-size:1.28rem}
   .nav-links{display:none}.nav-cta{display:none}.burger{display:flex}
   .hero-bg img{width:100%;opacity:.42;object-position:50% 16%}
@@ -1494,7 +1514,9 @@ function initPhiloScroll(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
-  const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
+  const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  const sensitivity = ()=> (isTouch ? 0.2 : 0.13) * (360 / Math.max(stage.clientWidth, 280));
+  const AXIS = isTouch ? 4 : 6;
 
   const onDown = (e)=>{
     if(PhiloWheel.busy || gesturing) return;
@@ -1504,7 +1526,7 @@ function initPhiloScroll(){
     startRot = PhiloWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
     sec.classList.add("is-dragging");
-    stage.setPointerCapture?.(e.pointerId);
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
   };
   const flushMove = ()=>{
     moveRaf = 0;
@@ -1516,9 +1538,14 @@ function initPhiloScroll(){
     if(!dragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
-      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); return; }
+    if(axis === null && (Math.abs(dx) > AXIS || Math.abs(dy) > AXIS)){
+      axis = Math.abs(dx) > Math.abs(dy) * 0.85 ? "x" : "y";
+      if(axis === "y"){
+        dragging = false; gesturing = false; axis = null;
+        sec.classList.remove("is-dragging");
+        try{ stage.releasePointerCapture(e.pointerId); }catch(_){}
+        return;
+      }
       sec.classList.add("has-dragged");
     }
     if(axis !== "x") return;
@@ -1531,14 +1558,14 @@ function initPhiloScroll(){
   const settle = ()=>{
     const n = I18N.philosophy.length || 1;
     let idx = Math.round((-PhiloWheel.rot) / (360 / n));
-    if(velocity < -0.35) idx += 1;
-    else if(velocity > 0.35) idx -= 1;
+    if(velocity < -0.28) idx += 1;
+    else if(velocity > 0.28) idx -= 1;
     PhiloWheel.goTo(((idx % n) + n) % n, true, false);
   };
   const onUp = (e)=>{
     if(!gesturing) return;
     const wasDragX = axis === "x";
-    const tapped = dragging && !wasDragX && Math.hypot(e.clientX - startX, e.clientY - startY) < 10;
+    const tapped = dragging && !wasDragX && Math.hypot(e.clientX - startX, e.clientY - startY) < 12;
     if(moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; }
     if(wasDragX){
       PhiloWheel.rot = startRot + ((e.clientX || pendingX) - startX) * sensitivity();
@@ -1546,6 +1573,7 @@ function initPhiloScroll(){
     }
     gesturing = false; dragging = false;
     sec.classList.remove("is-dragging");
+    try{ if(e.pointerId != null) stage.releasePointerCapture(e.pointerId); }catch(_){}
     if(wasDragX) settle();
     else if(tapped) openActivePhiloMeditation();
     axis = null;
@@ -1680,7 +1708,9 @@ function initProgCarousel(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
-  const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
+  const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  const sensitivity = ()=> (isTouch ? 0.2 : 0.13) * (360 / Math.max(stage.clientWidth, 280));
+  const AXIS = isTouch ? 4 : 6;
 
   const onDown = (e)=>{
     if(ProgWheel.busy || katanaBusy || gesturing) return;
@@ -1691,7 +1721,7 @@ function initProgCarousel(){
     startRot = ProgWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
     sec.classList.add("is-dragging");
-    stage.setPointerCapture?.(e.pointerId);
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
   };
   const flushMove = ()=>{
     moveRaf = 0;
@@ -1703,9 +1733,14 @@ function initProgCarousel(){
     if(!dragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
-      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); return; }
+    if(axis === null && (Math.abs(dx) > AXIS || Math.abs(dy) > AXIS)){
+      axis = Math.abs(dx) > Math.abs(dy) * 0.85 ? "x" : "y";
+      if(axis === "y"){
+        dragging = false; gesturing = false; axis = null;
+        sec.classList.remove("is-dragging");
+        try{ stage.releasePointerCapture(e.pointerId); }catch(_){}
+        return;
+      }
     }
     if(axis !== "x") return;
     e.preventDefault();
@@ -1717,8 +1752,8 @@ function initProgCarousel(){
   const settle = ()=>{
     const n = I18N.programs.length || 1;
     let idx = Math.round((-ProgWheel.rot) / (360 / n));
-    if(velocity < -0.35) idx += 1;
-    else if(velocity > 0.35) idx -= 1;
+    if(velocity < -0.28) idx += 1;
+    else if(velocity > 0.28) idx -= 1;
     ProgWheel.goTo(((idx % n) + n) % n, true, false);
   };
   const onUp = (e)=>{
@@ -1731,6 +1766,7 @@ function initProgCarousel(){
     }
     gesturing = false; dragging = false;
     sec.classList.remove("is-dragging");
+    try{ if(e.pointerId != null) stage.releasePointerCapture(e.pointerId); }catch(_){}
     if(wasDragX) settle();
     axis = null;
   };
@@ -1776,17 +1812,6 @@ const HubWheel = {
     if(!ring) return;
     ring.classList.toggle("snap", !!snap);
     ring.style.setProperty("--rot", this.rot.toFixed(3) + "deg");
-    if(!this.cards.length) this.refresh();
-    const n = this.items.length || 1;
-    const step = 360 / n;
-    this.cards.forEach((c,i)=>{
-      let ang = (i * step + this.rot) % 360;
-      if(ang > 180) ang -= 360;
-      if(ang < -180) ang += 360;
-      const abs = Math.abs(ang);
-      const drop = Math.min(90, abs * abs * 0.014 + abs * 0.55);
-      c.style.setProperty("--drop", drop.toFixed(1) + "px");
-    });
   },
   sync(){
     const n = this.items.length || 1;
@@ -1902,16 +1927,25 @@ function initHubCarousel(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
-  let autoPaused = false, pauseTimer = 0, spinRaf = 0, lastSpin = 0, lastSync = 0, inView = true;
-  const sensitivity = ()=> 0.13 * (360 / Math.max(stage.clientWidth, 280));
-  const SPIN = 0.018; /* deg/ms ≈ 18°/s */
+  let autoPaused = false, pauseTimer = 0, spinRaf = 0, lastSpin = 0, inView = true;
+  const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  const sensitivity = ()=> (isTouch ? 0.2 : 0.13) * (360 / Math.max(stage.clientWidth, 280));
+  const SPIN = isTouch ? 0.008 : 0.014;
+  const AXIS = isTouch ? 4 : 6;
 
-  const pauseAuto = (ms=4200)=>{
+  const pauseAuto = (ms=3800)=>{
     autoPaused = true;
     if(pauseTimer) clearTimeout(pauseTimer);
     pauseTimer = setTimeout(()=>{ autoPaused = false; lastSpin = performance.now(); }, ms);
   };
   HubWheel.pauseAuto = pauseAuto;
+
+  const releaseAxisY = (e)=>{
+    dragging = false; gesturing = false; axis = null;
+    sec.classList.remove("is-dragging");
+    try{ if(e && e.pointerId != null) stage.releasePointerCapture(e.pointerId); }catch(_){}
+    pauseAuto();
+  };
 
   const onDown = (e)=>{
     if(HubWheel.busy || katanaBusy || gesturing || !HubWheel.items.length) return;
@@ -1922,8 +1956,8 @@ function initHubCarousel(){
     startX = lastX = pendingX = e.clientX; startY = e.clientY;
     startRot = HubWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
-    sec.classList.add("is-dragging");
-    stage.setPointerCapture?.(e.pointerId);
+    sec.classList.add("is-dragging","has-dragged");
+    try{ stage.setPointerCapture(e.pointerId); }catch(_){}
   };
   const flushMove = ()=>{
     moveRaf = 0;
@@ -1935,9 +1969,9 @@ function initHubCarousel(){
     if(!dragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    if(axis === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)){
-      axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
-      if(axis === "y"){ dragging = false; gesturing = false; sec.classList.remove("is-dragging"); pauseAuto(); return; }
+    if(axis === null && (Math.abs(dx) > AXIS || Math.abs(dy) > AXIS)){
+      axis = Math.abs(dx) > Math.abs(dy) * 0.85 ? "x" : "y";
+      if(axis === "y"){ releaseAxisY(e); return; }
     }
     if(axis !== "x") return;
     e.preventDefault();
@@ -1949,14 +1983,14 @@ function initHubCarousel(){
   const settle = ()=>{
     const n = HubWheel.items.length || 1;
     let idx = Math.round((-HubWheel.rot) / (360 / n));
-    if(velocity < -0.35) idx += 1;
-    else if(velocity > 0.35) idx -= 1;
+    if(velocity < -0.28) idx += 1;
+    else if(velocity > 0.28) idx -= 1;
     HubWheel.goTo(((idx % n) + n) % n, true);
   };
   const onUp = (e)=>{
     if(!gesturing) return;
     const wasDragX = axis === "x";
-    const tapped = dragging && !wasDragX && Math.hypot(e.clientX - startX, e.clientY - startY) < 10;
+    const tapped = dragging && !wasDragX && Math.hypot(e.clientX - startX, e.clientY - startY) < 12;
     if(moveRaf){ cancelAnimationFrame(moveRaf); moveRaf = 0; }
     if(wasDragX){
       HubWheel.rot = startRot + ((e.clientX || pendingX) - startX) * sensitivity();
@@ -1964,6 +1998,7 @@ function initHubCarousel(){
     }
     gesturing = false; dragging = false;
     sec.classList.remove("is-dragging");
+    try{ if(e.pointerId != null) stage.releasePointerCapture(e.pointerId); }catch(_){}
     if(wasDragX) settle();
     else if(tapped) HubWheel.openActive();
     axis = null;
@@ -1981,12 +2016,14 @@ function initHubCarousel(){
     ring.classList.remove("snap");
     const dt = Math.min(t - lastSpin, 48);
     lastSpin = t;
+    const prev = HubWheel.active;
     HubWheel.rot -= SPIN * dt;
     HubWheel.paint(false);
-    if(t - lastSync > 120){
-      HubWheel.sync();
-      lastSync = t;
-    }
+    const n = HubWheel.items.length || 1;
+    const step = 360 / n;
+    let idx = Math.round((-HubWheel.rot) / step) % n;
+    if(idx < 0) idx += n;
+    if(idx !== prev) HubWheel.sync();
   };
   spinRaf = requestAnimationFrame(tick);
 
