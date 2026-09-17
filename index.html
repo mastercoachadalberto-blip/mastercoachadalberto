@@ -1101,7 +1101,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
         <li><svg viewBox="0 0 24 24"><path d="M5 4h11a2 2 0 0 1 2 2v14H7a2 2 0 0 0-2 2zM18 20V6"/></svg><span data-i18n="app.feat4">Reflexiones diarias y contenido de crecimiento</span></li>
       </ul>
       <div class="app-badges reveal d3">
-        <a class="play-badge" id="appPlayBadge" href="#" target="_blank" rel="noopener" aria-label="Descargar en Google Play">
+        <a class="play-badge" id="appPlayBadge" href="https://play.google.com/store/apps/details?id=com.pattyapp.mastercoach" target="_blank" rel="noopener" aria-label="Descargar en Google Play">
           <svg viewBox="0 0 30 33" aria-hidden="true">
             <path fill="#00D2FF" d="M2.4 1.1C2 1.4 1.8 2 1.8 2.8v27.4c0 .8.2 1.4.6 1.7l.1.1L17.6 16.7v-.3L2.4 1.1z"/>
             <path fill="#FFCE00" d="M22.6 21.8l-5-5v-.3l5-5 .1.1 6 3.4c1.7 1 1.7 2.6 0 3.5l-6.1 3.3z"/>
@@ -1177,7 +1177,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
           <h5 data-i18n="foot.col3">Reservar</h5>
           <a href="#book" data-i18n="foot.col3a">Agendar sesión</a>
           <a href="#programs" data-i18n="foot.col3b">Ver programas</a>
-          <a id="footPlay" href="#" target="_blank" rel="noopener" data-i18n="foot.col3c">Descargar la app</a>
+          <a id="footPlay" href="https://play.google.com/store/apps/details?id=com.pattyapp.mastercoach" target="_blank" rel="noopener" data-i18n="foot.col3c">Descargar la app</a>
         </div>
       </div>
     </div>
@@ -1399,7 +1399,7 @@ const PhiloWheel = {
 (function initGlobalKatana(){
   const SEL = [
     "button",
-    "a.btn","a.nav-cta","a.pbtn","a.play-badge","a.brand",
+    "a.btn","a.nav-cta","a.pbtn","a.brand",
     ".nav-links a",".mobile-menu a",
     ".chip",".burger",".lang-btn",".lang-select-m button",
     ".tarrow",".modal-close",".share",
@@ -1462,7 +1462,7 @@ const PhiloWheel = {
 function isExternalAppLink(href){
   if(!href || href === "#") return false;
   /* Enlaces que deben abrir al instante (WhatsApp, pagos, redes, mail) */
-  return /^(https?:|mailto:|tel:)/i.test(href);
+  return /^(https?:|mailto:|tel:|market:|intent:)/i.test(href);
 }
 
 function renderPhilo(){
@@ -2359,10 +2359,45 @@ $("#calPrev").addEventListener("click",()=>{
 $("#calNext").addEventListener("click",()=>{view.setMonth(view.getMonth()+1);renderCal();});
 
 /* ----- static channels / play ----- */
-const _play = document.getElementById("appPlayBadge");
-if(_play){ if(PLAY_URL){ _play.href = PLAY_URL; } else { _play.style.opacity=".55"; _play.style.pointerEvents="none"; } }
-const _footPlay = document.getElementById("footPlay");
-if(_footPlay && PLAY_URL){ _footPlay.href = PLAY_URL; }
+const PLAY_PKG = "com.pattyapp.mastercoach";
+const PLAY_WEB = PLAY_URL || ("https://play.google.com/store/apps/details?id=" + PLAY_PKG);
+const PLAY_DIRECT = /android/i.test(navigator.userAgent || "")
+  ? ("market://details?id=" + PLAY_PKG)
+  : PLAY_WEB;
+function bindPlayLink(el){
+  if(!el) return;
+  if(!PLAY_WEB){ el.style.opacity=".55"; el.style.pointerEvents="none"; return; }
+  el.href = PLAY_DIRECT;
+  el.setAttribute("rel","noopener");
+  el.addEventListener("click", (e)=>{
+    /* Abrir Play Store de inmediato (sin katana / sin popup diferido) */
+    e.stopPropagation();
+    if(/android/i.test(navigator.userAgent || "")){
+      e.preventDefault();
+      window.location.href = "market://details?id=" + PLAY_PKG;
+      setTimeout(()=>{ window.location.href = PLAY_WEB; }, 700);
+    }
+  }, true);
+}
+bindPlayLink(document.getElementById("appPlayBadge"));
+bindPlayLink(document.getElementById("footPlay"));
+const _phone = document.querySelector("#app .phone-wrap");
+if(_phone && !_phone.closest("a") && PLAY_WEB){
+  _phone.style.cursor = "pointer";
+  _phone.setAttribute("role","link");
+  _phone.setAttribute("tabindex","0");
+  _phone.setAttribute("aria-label","Descargar en Google Play");
+  const goPlay = ()=>{
+    if(/android/i.test(navigator.userAgent || "")){
+      window.location.href = "market://details?id=" + PLAY_PKG;
+      setTimeout(()=>{ window.location.href = PLAY_WEB; }, 700);
+    } else {
+      window.open(PLAY_WEB, "_blank", "noopener");
+    }
+  };
+  _phone.addEventListener("click", goPlay);
+  _phone.addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); goPlay(); } });
+}
 $("#footWa").href = WHATSAPP_NUMBER
   ? `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}`
   : WHATSAPP_LINK;
