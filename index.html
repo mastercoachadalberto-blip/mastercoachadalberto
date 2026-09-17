@@ -1066,7 +1066,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
         <div class="field"><label data-i18n="book.lblGoal">¿Qué quieres transformar?</label><textarea id="fGoal" data-i18n-placeholder="book.phGoal" placeholder="Cuéntame brevemente tu objetivo…"></textarea></div>
         <div class="book-actions">
           <a class="btn btn-gold" id="stripePay" href="#programs" rel="noopener" style="width:100%" data-i18n="js.payBtn">Pagar con tarjeta</a>
-          <a class="btn btn-ghost" id="waSend" href="https://wa.me/16574522079" rel="noopener" style="width:100%" data-wa="1" data-i18n="book.waSend">Confirmar por WhatsApp</a>
+          <a class="btn btn-ghost" id="waSend" href="https://wa.me/16574522079" rel="noopener" style="width:100%" data-i18n="book.waSend">Confirmar por WhatsApp</a>
           <div class="chan">
             <a id="msgr" href="https://m.me/" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.3 2 2 6.2 2 11.6c0 2.9 1.3 5.4 3.3 7.1V22l3-1.7c.8.2 1.7.3 2.6.3 5.7 0 10-4.2 10-9.6S17.7 2 12 2zm1 12.3l-2.6-2.7L5.6 14l5.4-5.7 2.6 2.7L18.4 8l-5.4 6.3z"/></svg>
@@ -1170,7 +1170,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
           <a href="https://www.facebook.com/share/1BgK8QzC1j/?mibextid=wwXIfr" target="_blank" rel="noopener">Facebook</a>
           <a href="https://www.instagram.com/adalbertocardoza?igsh=MXZxNzcwOGluZGhoNQ==" target="_blank" rel="noopener">Instagram</a>
           <a href="https://www.youtube.com/@mastercoachadalbertocardoza" target="_blank" rel="noopener">YouTube</a>
-          <a href="https://wa.me/16574522079" rel="noopener" id="footWa" data-wa="1">WhatsApp</a>
+          <a href="https://wa.me/16574522079" rel="noopener" id="footWa">WhatsApp</a>
           <a href="mailto:Adalbertocardoza36@gmail.com">Email</a>
         </div>
         <div class="foot-col">
@@ -1413,7 +1413,10 @@ const PhiloWheel = {
     if(el.dataset.katanaGo) return;
     if(el.disabled || el.getAttribute("aria-disabled") === "true") return;
     if(el.closest(".katana-fx") || el.closest(".slice-ghost")) return;
-    /* WhatsApp / pagos / mailto: no retrasar — el navegador bloquea window.open diferido */
+    /* WhatsApp / pagos / mailto: navegación nativa inmediata */
+    if(el.id === "waSend" || el.id === "footWa" || el.classList.contains("pbtn-wa") || el.closest("#waSend,#footWa,a.pbtn-wa")){
+      return;
+    }
     const href = el.getAttribute && el.getAttribute("href");
     if(el.tagName === "A" && href && isExternalAppLink(href)){
       return;
@@ -1720,9 +1723,9 @@ function renderPrograms(){
   ring.innerHTML = items.map((p,i)=>{
     const title=p.t[lang];
     const msg = encodeURIComponent(`${T("js.payMsg")} "${title}" (${p.price}).`);
-    const waHref = typeof waChatUrl === "function"
-      ? waChatUrl(decodeURIComponent(msg))
-      : (WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}` : WHATSAPP_LINK);
+    const waHref = WHATSAPP_NUMBER
+      ? `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`
+      : WHATSAPP_LINK;
     const payHref = p.pay ? p.pay : waHref;
     return `
     <article class="prog" style="--i:${(i*step).toFixed(3)}deg" data-idx="${i}" data-prog="${p.n}">
@@ -1730,7 +1733,7 @@ function renderPrograms(){
       <h3>${title}</h3><p>${p.d[lang]}</p>
       <div class="meta"><span class="dur">${p.dur[lang]}</span><span class="price">${fmtPrice(p.price)}</span></div>
       <a class="pbtn pbtn-pay" href="${payHref}" target="_blank" rel="noopener">${T("js.payBtn")}</a>
-      <a class="pbtn pbtn-wa" href="${waHref}" rel="noopener" data-wa="1">${T("js.payWaBtn")}</a>
+      <a class="pbtn pbtn-wa" href="${waHref}" rel="noopener">${T("js.payWaBtn")}</a>
       <button class="pbtn" data-prog="${p.n}">${T("js.scheduleBtn")}</button>
     </article>`;
   }).join("");
@@ -2234,7 +2237,7 @@ $("#shareBtn").addEventListener("click",async()=>{
   if(navigator.share){try{await navigator.share({title:T("js.shareTitle"),text});return;}catch(e){}}
   try{await navigator.clipboard.writeText(text);
     $("#shareTxt").textContent=T("js.copied");setTimeout(()=>$("#shareTxt").textContent=T("js.share"),1800);
-  }catch(e){ if(typeof openWhatsAppChat==="function") openWhatsAppChat(text); else window.location.href="https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(text); }
+  }catch(e){ window.location.href = "https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(text); }
 });
 
 /* ----- testimonials ----- */
@@ -2335,11 +2338,10 @@ function buildWa(){
   msg+=`\n\n${T("js.waClose")}`;
   const enc=encodeURIComponent(msg);
   waMessage=msg;
-  const waUrl = typeof waChatUrl === "function" ? waChatUrl(msg) : (WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${enc}` : WHATSAPP_LINK);
+  const waUrl = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${enc}` : WHATSAPP_LINK;
   const waA = $("#waSend");
   waA.href = waUrl;
   waA.setAttribute("rel","noopener");
-  waA.setAttribute("data-wa","1");
   waA.removeAttribute("target");
   const subj=encodeURIComponent(T("js.mailSubject"));
   $("#mail").href = `mailto:${EMAIL}?subject=${subj}&body=${enc}`;
@@ -2398,88 +2400,31 @@ if(_phone && !_phone.closest("a") && PLAY_WEB){
   _phone.addEventListener("click", goPlay);
   _phone.addEventListener("keydown", (e)=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); goPlay(); } });
 }
-/* WhatsApp: abrir la app instalada (evita el aviso falso de "no instalada") */
-const IS_MOBILE_UA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
-function waWebUrl(text){
+/* WhatsApp: solo wa.me en la misma pestaña (el SO abre la app instalada).
+   No usar whatsapp:// ni api.whatsapp.com ni target=_blank: provocan el aviso falso de "no instalada". */
+function waHref(text){
   if(!WHATSAPP_NUMBER) return WHATSAPP_LINK;
   const enc = text ? encodeURIComponent(text) : "";
   return enc ? `https://wa.me/${WHATSAPP_NUMBER}?text=${enc}` : `https://wa.me/${WHATSAPP_NUMBER}`;
 }
-function waAppUrl(text){
-  if(!WHATSAPP_NUMBER) return WHATSAPP_LINK;
-  const enc = text ? encodeURIComponent(text) : "";
-  const q = enc ? `phone=${WHATSAPP_NUMBER}&text=${enc}` : `phone=${WHATSAPP_NUMBER}`;
-  /* Android: intent nativo (abre WhatsApp o Business si está instalada) */
-  if(/Android/i.test(navigator.userAgent || "")){
-    const fallback = encodeURIComponent(waWebUrl(text));
-    return `intent://send/?${q}#Intent;scheme=whatsapp;S.browser_fallback_url=${fallback};end`;
-  }
-  return enc
-    ? `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=${enc}`
-    : `whatsapp://send?phone=${WHATSAPP_NUMBER}`;
-}
-function waChatUrl(text){
-  return IS_MOBILE_UA ? waAppUrl(text) : waWebUrl(text);
-}
-function openWhatsAppChat(text, e){
-  if(e){
-    e.preventDefault();
-    e.stopPropagation();
-    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-  }
-  const web = waWebUrl(text);
-  if(IS_MOBILE_UA){
-    /* Misma pestaña + esquema nativo = abre la app instalada */
-    window.location.href = waAppUrl(text);
-    setTimeout(()=>{
-      if(document.hidden || document.visibilityState === "hidden") return;
-      window.location.href = web;
-    }, 1800);
-  } else {
-    window.open(web, "_blank");
-  }
-}
-function bindWhatsAppLinks(){
-  document.querySelectorAll("a[data-wa], #waSend, #footWa, a.pbtn-wa").forEach((a)=>{
-    if(a.dataset.waBound) return;
-    a.dataset.waBound = "1";
-    a.setAttribute("data-wa","1");
+function prepareWaAnchors(){
+  document.querySelectorAll("#waSend, #footWa, a.pbtn-wa").forEach((a)=>{
     a.removeAttribute("target");
-    a.addEventListener("click", (e)=>{
-      let text = "";
-      if(a.id === "waSend") text = waMessage || "";
-      else if(a.classList.contains("pbtn-wa")){
-        try{
-          const u = new URL(a.href, location.href);
-          text = u.searchParams.get("text") || "";
-        }catch(_){
-          const m = (a.getAttribute("href")||"").match(/[?&]text=([^&]*)/);
-          if(m){ try{ text = decodeURIComponent(m[1]); }catch(__){ text = m[1]; } }
-        }
-      }
-      const label = a.id === "waSend" ? a : null;
-      if(label){
-        const orig = label.textContent;
-        label.textContent = T("js.openingWa");
-        setTimeout(()=>{ label.textContent = orig; }, 2200);
-      }
-      openWhatsAppChat(text, e);
-    }, true);
+    a.setAttribute("rel","noopener");
+    /* Dejar que el navegador navegue nativo; no interceptar el click */
   });
 }
 const _footWa = $("#footWa");
 if(_footWa){
-  _footWa.href = waChatUrl("");
-  _footWa.setAttribute("data-wa","1");
+  _footWa.href = waHref("");
   _footWa.removeAttribute("target");
 }
-$("#msgr").href=FACEBOOK;
-bindWhatsAppLinks();
-/* Re-bind after programas se re-renderizan */
-const _rp = renderPrograms;
+$("#msgr").href = FACEBOOK;
+prepareWaAnchors();
+const _rpWa = renderPrograms;
 renderPrograms = function(){
-  _rp.apply(this, arguments);
-  bindWhatsAppLinks();
+  _rpWa.apply(this, arguments);
+  prepareWaAnchors();
 };
 
 /* ----- language switching ----- */
