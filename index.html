@@ -515,7 +515,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   transition:transform .65s var(--ease),opacity .3s var(--ease),filter .3s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);
 }
 .post{
-  --x:0px; --y:0px; --z:0px; --ry:0deg; --s:1;
+  --x:0px; --y:0px; --z:0px; --ry:0deg; --s:1; --op:0;
   position:absolute;left:50%;top:50%;
   width:min(320px,78vw);min-height:320px;
   margin:-160px 0 0 calc(min(320px,78vw) / -2);
@@ -525,10 +525,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   box-shadow:0 0 0 1px rgba(200,162,74,.04), 0 18px 50px -28px rgba(0,0,0,.75);
   transform:translate3d(var(--x),var(--y),var(--z)) rotateY(var(--ry)) scale(var(--s));
   transform-style:preserve-3d;backface-visibility:hidden;
-  opacity:0;filter:saturate(.7) brightness(.72);
-  transition:opacity .25s var(--ease),filter .25s var(--ease),border-color .25s var(--ease),box-shadow .25s var(--ease);
+  opacity:var(--op);filter:saturate(calc(.62 + var(--op) * .38)) brightness(calc(.68 + var(--op) * .32));
+  transition:opacity .18s linear,filter .18s linear,border-color .25s var(--ease),box-shadow .25s var(--ease);
   pointer-events:none;
-  will-change:transform;
+  will-change:transform,opacity;
 }
 .post::before{content:"";position:absolute;inset:0;border-radius:16px;pointer-events:none;
   background:radial-gradient(120% 80% at 100% 0,rgba(200,162,74,.12),transparent 55%);opacity:0;transition:opacity .35s var(--ease)}
@@ -546,8 +546,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .post.lit::before{opacity:1}
 .post.lit h4{color:var(--gold-lt)}
 .post.lit .more{color:var(--gold-lt)}
-.post.near{opacity:.58;filter:saturate(.88) brightness(.9);z-index:3}
-.post.far{opacity:.28;filter:saturate(.65) brightness(.7);z-index:1}
+.post.near{z-index:3}
+.post.far{z-index:1}
 .hub-dots{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:28px;position:relative;z-index:3}
 .hub-dots button{
   width:7px;height:7px;border-radius:50%;padding:0;
@@ -767,11 +767,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .post{
     width:min(300px,84vw);min-height:290px;
     margin:-145px 0 0 calc(min(300px,84vw) / -2);
-    padding:28px 24px;opacity:0;
+    padding:28px 24px;
   }
-  .post.lit{opacity:1}
-  .post.near{opacity:.52}
-  .post.far{opacity:.2}
   .post h4{font-size:1.5rem}
   .pcard{opacity:.3}
   .pcard.lit{opacity:1}
@@ -1173,7 +1170,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
           <a href="https://www.facebook.com/share/1BgK8QzC1j/?mibextid=wwXIfr" target="_blank" rel="noopener">Facebook</a>
           <a href="https://www.instagram.com/adalbertocardoza?igsh=MXZxNzcwOGluZGhoNQ==" target="_blank" rel="noopener">Instagram</a>
           <a href="https://www.youtube.com/@mastercoachadalbertocardoza" target="_blank" rel="noopener">YouTube</a>
-          <a href="https://wa.me/10000000000" target="_blank" rel="noopener" id="footWa">WhatsApp</a>
+          <a href="https://api.whatsapp.com/send?phone=16574522079" target="_blank" rel="noopener" id="footWa">WhatsApp</a>
           <a href="mailto:Adalbertocardoza36@gmail.com">Email</a>
         </div>
         <div class="foot-col">
@@ -1313,10 +1310,15 @@ function proceedAfterKatana(el){
   const href = el.getAttribute && el.getAttribute("href");
   try{
     if(el.tagName === "A" && href){
-      if(href.startsWith("#") && href.length > 1){
+      if(href === "#" || href === ""){
         el.click();
-      } else if(el.target === "_blank"){
-        window.open(href, "_blank", "noopener");
+      } else if(href.startsWith("#") && href.length > 1){
+        el.click();
+      } else if(el.target === "_blank" || /^https?:/i.test(href)){
+        const w = window.open(href, "_blank");
+        if(w) try{ w.opener = null; }catch(_){}
+      } else if(/^mailto:|^tel:/i.test(href)){
+        window.location.href = href;
       } else {
         el.click();
       }
@@ -1368,6 +1370,7 @@ const PhiloWheel = {
   },
   goTo(idx, snap=true, fx=false){
     if(this.busy) return;
+    if(typeof this.pauseAuto === "function") this.pauseAuto();
     const n = I18N.philosophy.length || 1;
     const step = 360 / n;
     idx = ((idx % n) + n) % n;
@@ -1410,6 +1413,11 @@ const PhiloWheel = {
     if(el.dataset.katanaGo) return;
     if(el.disabled || el.getAttribute("aria-disabled") === "true") return;
     if(el.closest(".katana-fx") || el.closest(".slice-ghost")) return;
+    /* WhatsApp / pagos / mailto: no retrasar — el navegador bloquea window.open diferido */
+    const href = el.getAttribute && el.getAttribute("href");
+    if(el.tagName === "A" && href && isExternalAppLink(href)){
+      return;
+    }
     // pilares / programas / contenido: corte sobre la tarjeta activa
     if(el.closest("#philoDots")){
       e.preventDefault();
@@ -1450,6 +1458,12 @@ const PhiloWheel = {
     });
   }, true);
 })();
+
+function isExternalAppLink(href){
+  if(!href || href === "#") return false;
+  /* Enlaces que deben abrir al instante (WhatsApp, pagos, redes, mail) */
+  return /^(https?:|mailto:|tel:)/i.test(href);
+}
 
 function renderPhilo(){
   const items = I18N.philosophy;
@@ -1520,14 +1534,24 @@ function initPhiloScroll(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
+  let autoPaused = false, pauseTimer = 0, lastSpin = 0, inView = true;
   const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   const sensitivity = ()=> (isTouch ? 0.2 : 0.13) * (360 / Math.max(stage.clientWidth, 280));
+  const SPIN = isTouch ? 0.007 : 0.012;
   const AXIS = isTouch ? 4 : 6;
+  const pauseAuto = (ms=3200)=>{
+    autoPaused = true;
+    if(pauseTimer) clearTimeout(pauseTimer);
+    pauseTimer = setTimeout(()=>{ autoPaused = false; lastSpin = performance.now(); }, ms);
+  };
+  PhiloWheel.pauseAuto = pauseAuto;
 
   const onDown = (e)=>{
     if(PhiloWheel.busy || gesturing) return;
     if(e.pointerType === "mouse" && e.button !== 0) return;
     gesturing = true; dragging = true; axis = null;
+    autoPaused = true;
+    if(pauseTimer) clearTimeout(pauseTimer);
     startX = lastX = pendingX = e.clientX; startY = e.clientY;
     startRot = PhiloWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
@@ -1550,6 +1574,7 @@ function initPhiloScroll(){
         dragging = false; gesturing = false; axis = null;
         sec.classList.remove("is-dragging");
         try{ stage.releasePointerCapture(e.pointerId); }catch(_){}
+        pauseAuto();
         return;
       }
       sec.classList.add("has-dragged");
@@ -1583,7 +1608,30 @@ function initPhiloScroll(){
     if(wasDragX) settle();
     else if(tapped) openActivePhiloMeditation();
     axis = null;
+    pauseAuto();
   };
+
+  const tick = (t)=>{
+    requestAnimationFrame(tick);
+    if(!lastSpin) lastSpin = t;
+    if(autoPaused || gesturing || dragging || PhiloWheel.busy || katanaBusy || !inView || document.hidden){
+      lastSpin = t;
+      return;
+    }
+    ring.classList.remove("snap");
+    const dt = Math.min(t - lastSpin, 48);
+    lastSpin = t;
+    PhiloWheel.rot -= SPIN * dt;
+    PhiloWheel.apply(false);
+  };
+  requestAnimationFrame(tick);
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries)=>{
+      inView = entries.some(en => en.isIntersecting && en.intersectionRatio > 0.12);
+      if(inView) lastSpin = performance.now();
+    }, {threshold:[0, 0.12, 0.35]});
+    io.observe(sec);
+  }
 
   stage.addEventListener("pointerdown", onDown);
   stage.addEventListener("pointermove", onMove, {passive:false});
@@ -1591,9 +1639,9 @@ function initPhiloScroll(){
   stage.addEventListener("pointercancel", onUp);
   stage.tabIndex = 0;
   stage.addEventListener("keydown", (e)=>{
-    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active+1, true, false); }
-    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active-1, true, false); }
-    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openActivePhiloMeditation(); }
+    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active+1, true, false); pauseAuto(); }
+    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); PhiloWheel.goTo(PhiloWheel.active-1, true, false); pauseAuto(); }
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openActivePhiloMeditation(); pauseAuto(); }
   });
   PhiloWheel.refresh();
   PhiloWheel.apply(false);
@@ -1640,6 +1688,7 @@ const ProgWheel = {
   },
   goTo(idx, snap=true, fx=false){
     if(this.busy) return;
+    if(typeof this.pauseAuto === "function") this.pauseAuto();
     const n = I18N.programs.length || 1;
     const step = 360 / n;
     idx = ((idx % n) + n) % n;
@@ -1671,7 +1720,9 @@ function renderPrograms(){
   ring.innerHTML = items.map((p,i)=>{
     const title=p.t[lang];
     const msg = encodeURIComponent(`${T("js.payMsg")} "${title}" (${p.price}).`);
-    const waHref = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}` : WHATSAPP_LINK;
+    const waHref = WHATSAPP_NUMBER
+      ? `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${msg}`
+      : WHATSAPP_LINK;
     const payHref = p.pay ? p.pay : waHref;
     return `
     <article class="prog" style="--i:${(i*step).toFixed(3)}deg" data-idx="${i}" data-prog="${p.n}">
@@ -1714,15 +1765,25 @@ function initProgCarousel(){
 
   let dragging = false, axis = null, startX = 0, startY = 0, startRot = 0;
   let lastX = 0, lastT = 0, velocity = 0, moveRaf = 0, pendingX = 0, gesturing = false;
+  let autoPaused = false, pauseTimer = 0, lastSpin = 0, inView = true;
   const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   const sensitivity = ()=> (isTouch ? 0.2 : 0.13) * (360 / Math.max(stage.clientWidth, 280));
+  const SPIN = isTouch ? 0.007 : 0.012;
   const AXIS = isTouch ? 4 : 6;
+  const pauseAuto = (ms=3200)=>{
+    autoPaused = true;
+    if(pauseTimer) clearTimeout(pauseTimer);
+    pauseTimer = setTimeout(()=>{ autoPaused = false; lastSpin = performance.now(); }, ms);
+  };
+  ProgWheel.pauseAuto = pauseAuto;
 
   const onDown = (e)=>{
     if(ProgWheel.busy || katanaBusy || gesturing) return;
     if(e.target.closest && e.target.closest("a,button,.pbtn")) return;
     if(e.pointerType === "mouse" && e.button !== 0) return;
     gesturing = true; dragging = true; axis = null;
+    autoPaused = true;
+    if(pauseTimer) clearTimeout(pauseTimer);
     startX = lastX = pendingX = e.clientX; startY = e.clientY;
     startRot = ProgWheel.rot; velocity = 0; lastT = performance.now();
     ring.classList.remove("snap");
@@ -1745,6 +1806,7 @@ function initProgCarousel(){
         dragging = false; gesturing = false; axis = null;
         sec.classList.remove("is-dragging");
         try{ stage.releasePointerCapture(e.pointerId); }catch(_){}
+        pauseAuto();
         return;
       }
     }
@@ -1775,7 +1837,30 @@ function initProgCarousel(){
     try{ if(e.pointerId != null) stage.releasePointerCapture(e.pointerId); }catch(_){}
     if(wasDragX) settle();
     axis = null;
+    pauseAuto();
   };
+
+  const tick = (t)=>{
+    requestAnimationFrame(tick);
+    if(!lastSpin) lastSpin = t;
+    if(autoPaused || gesturing || dragging || ProgWheel.busy || katanaBusy || !inView || document.hidden){
+      lastSpin = t;
+      return;
+    }
+    ring.classList.remove("snap");
+    const dt = Math.min(t - lastSpin, 48);
+    lastSpin = t;
+    ProgWheel.rot -= SPIN * dt;
+    ProgWheel.apply(false);
+  };
+  requestAnimationFrame(tick);
+  if("IntersectionObserver" in window){
+    const io = new IntersectionObserver((entries)=>{
+      inView = entries.some(en => en.isIntersecting && en.intersectionRatio > 0.12);
+      if(inView) lastSpin = performance.now();
+    }, {threshold:[0, 0.12, 0.35]});
+    io.observe(sec);
+  }
 
   stage.addEventListener("pointerdown", onDown);
   stage.addEventListener("pointermove", onMove, {passive:false});
@@ -1783,8 +1868,8 @@ function initProgCarousel(){
   stage.addEventListener("pointercancel", onUp);
   stage.tabIndex = 0;
   stage.addEventListener("keydown", (e)=>{
-    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active+1, true, false); }
-    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active-1, true, false); }
+    if(e.key === "ArrowRight" || e.key === "ArrowDown"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active+1, true, false); pauseAuto(); }
+    if(e.key === "ArrowLeft" || e.key === "ArrowUp"){ e.preventDefault(); ProgWheel.goTo(ProgWheel.active-1, true, false); pauseAuto(); }
   });
   ProgWheel.refresh();
   ProgWheel.apply(false);
@@ -1825,39 +1910,50 @@ const HubWheel = {
     const ampS = mobile ? 52 : 100;
     const ampY = mobile ? 58 : 92;
     const ampZ = mobile ? 80 : 140;
+    let front = 0, frontAbs = 1e9;
+    const absOf = new Array(this.cards.length);
     this.cards.forEach((c,i)=>{
       let ang = ((i * step + this.rot) % 360 + 360) % 360;
       if(ang > 180) ang -= 360;
       const rad = ang * Math.PI / 180;
+      const abs = Math.abs(ang);
+      absOf[i] = abs;
+      if(abs < frontAbs){ frontAbs = abs; front = i; }
       /* trayectoria en S descendente */
       const x = Math.sin(rad) * ampX + Math.sin(2 * rad) * ampS;
       const y = Math.abs(rad) * ampY + Math.sin(2 * rad) * (ampS * 0.28) + Math.max(0, rad) * 18;
       const z = Math.cos(rad) * 40 - Math.abs(rad) * (ampZ * 0.55);
       const ry = ang * 0.38;
       const s = Math.max(0.72, 1 - Math.abs(rad) * 0.18);
+      /* opacidad por ángulo: toda tarjeta en el arco se ve girar */
+      const op = abs > 125 ? 0 : Math.max(0, Math.min(1, 1 - abs / 98));
       c.style.setProperty("--x", x.toFixed(1) + "px");
       c.style.setProperty("--y", y.toFixed(1) + "px");
       c.style.setProperty("--z", z.toFixed(1) + "px");
       c.style.setProperty("--ry", ry.toFixed(2) + "deg");
       c.style.setProperty("--s", s.toFixed(3));
-      c.style.visibility = Math.abs(ang) > 130 ? "hidden" : "visible";
-      c.style.zIndex = String(20 - Math.round(Math.abs(ang) / 6));
+      c.style.setProperty("--op", op.toFixed(3));
+      c.style.visibility = abs > 132 ? "hidden" : "visible";
+      c.style.zIndex = String(20 - Math.round(abs / 6));
     });
+    this.cards.forEach((c,i)=>{
+      const abs = absOf[i] || 0;
+      c.classList.toggle("lit", i === front);
+      c.classList.toggle("near", i !== front && abs < 48);
+      c.classList.toggle("far", i !== front && abs >= 48 && abs < 88);
+      if(i === front) c.style.zIndex = "30";
+    });
+    if(this.active !== front){
+      this.active = front;
+      const activeEl = $("#hubActive");
+      if(activeEl) activeEl.textContent = String((this.items.length?front+1:0)).padStart(2,"0");
+      this.dots.forEach((b,i)=>b.classList.toggle("on", i===front));
+    }
   },
   sync(){
-    const n = this.items.length || 1;
-    const step = 360 / n;
-    let idx = Math.round((-this.rot) / step) % n;
-    if(idx < 0) idx += n;
-    this.active = idx;
     if(!this.cards.length) this.refresh();
-    this.cards.forEach((c,i)=>{
-      const dist = Math.min(Math.abs(i-idx), n - Math.abs(i-idx));
-      c.classList.toggle("lit", i===idx);
-      c.classList.toggle("near", dist===1);
-      c.classList.toggle("far", dist===2);
-      if(i===idx) c.style.zIndex = "30";
-    });
+    this.paint(false);
+    const idx = this.active;
     const activeEl = $("#hubActive");
     if(activeEl) activeEl.textContent = String((this.items.length?idx+1:0)).padStart(2,"0");
     this.dots.forEach((b,i)=>b.classList.toggle("on", i===idx));
@@ -2048,14 +2144,8 @@ function initHubCarousel(){
     ring.classList.remove("snap");
     const dt = Math.min(t - lastSpin, 48);
     lastSpin = t;
-    const prev = HubWheel.active;
     HubWheel.rot -= SPIN * dt;
     HubWheel.paint(false);
-    const n = HubWheel.items.length || 1;
-    const step = 360 / n;
-    let idx = Math.round((-HubWheel.rot) / step) % n;
-    if(idx < 0) idx += n;
-    if(idx !== prev) HubWheel.sync();
   };
   spinRaf = requestAnimationFrame(tick);
 
@@ -2243,9 +2333,14 @@ function buildWa(){
   else if(pickDate) msg+=`\n${T("js.waDate")}: ${fmtDate(pickDate)} ${T("js.waNeedTime")}`;
   if(goal) msg+=`\n${T("js.waGoal")}: ${goal}`;
   msg+=`\n\n${T("js.waClose")}`;
-  waMessage=msg;
   const enc=encodeURIComponent(msg);
-  $("#waSend").href = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${enc}` : WHATSAPP_LINK;
+  waMessage=msg;
+  const waUrl = WHATSAPP_NUMBER
+    ? `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${enc}`
+    : WHATSAPP_LINK;
+  $("#waSend").href = waUrl;
+  $("#waSend").setAttribute("target","_blank");
+  $("#waSend").setAttribute("rel","noopener");
   const subj=encodeURIComponent(T("js.mailSubject"));
   $("#mail").href = `mailto:${EMAIL}?subject=${subj}&body=${enc}`;
   const sp=$("#stripePay");
@@ -2268,7 +2363,9 @@ const _play = document.getElementById("appPlayBadge");
 if(_play){ if(PLAY_URL){ _play.href = PLAY_URL; } else { _play.style.opacity=".55"; _play.style.pointerEvents="none"; } }
 const _footPlay = document.getElementById("footPlay");
 if(_footPlay && PLAY_URL){ _footPlay.href = PLAY_URL; }
-$("#footWa").href=WHATSAPP_LINK;
+$("#footWa").href = WHATSAPP_NUMBER
+  ? `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}`
+  : WHATSAPP_LINK;
 $("#msgr").href=FACEBOOK;
 $("#waSend").addEventListener("click",()=>{
   const a=$("#waSend"),orig=a.textContent;
